@@ -105,19 +105,23 @@ void print(int val);
 ```cpp
 enum class Direction  { NORTH, EAST, SOUTH, WEST };
 enum class CellState  { EMPTY, TILLED, PLANTED, GROWING, READY, BASE };
-enum class CropType   { WHEAT, POTATO, PUMPKIN };
+enum class CropType   { WHEAT, POTATO, PUMPKIN, CORN, MUSHROOM, COFFEE };
 ```
 
 ---
 
 ## Crops
 
-| Crop    | Growth     | Sell  | Seed  | Profit | Gold/tick |
-|---------|------------|-------|-------|--------|-----------|
-| Wheat   | 8+12 ticks | 2 🪙  | 1 🪙  | 1      | 0.050     |
-| Potato  | 14+20 ticks| 6 🪙  | 2 🪙  | 4      | 0.118     |
-| Pumpkin | 25+40 ticks| 10 🪙 | 5 🪙  | 5      | 0.077     |
+| Crop     | Growth      | Sell  | Seed  | Profit | Gold/tick | Unlock  |
+|----------|-------------|-------|-------|--------|-----------|---------|
+| Wheat    | 8+12 ticks  | 2 🪙  | 1 🪙  | 1      | 0.050     | free    |
+| Potato   | 14+20 ticks | 6 🪙  | 2 🪙  | 4      | 0.118     | free    |
+| Pumpkin  | 25+40 ticks | 10 🪙 | 5 🪙  | 5      | 0.077     | 80 🪙   |
+| Corn     | 18+27 ticks | 9 🪙  | 3 🪙  | 6      | 0.133     | 280 🪙  |
+| Mushroom | 15+25 ticks | 10 🪙 | 4 🪙  | 6      | 0.150     | 650 🪙  |
+| Coffee   | 40+80 ticks | 35 🪙 | 20 🪙 | 15     | 0.125     | 1500 🪙 |
 
+**Mushroom:** grows only if `water_level > 40` — requires preventive watering strategy.
 **Water:** every planted/growing cell loses 2 water/tick. Growth pauses at 0.
 **Tank:** holds water for `water()` calls. Refills at base (+8/tick).
 **Battery:** every action costs 1 energy. Recharges at base (+10/tick).

@@ -24,9 +24,12 @@ enum class CellState {
 
 // ── Crops ─────────────────────────────────────────────────────
 enum class CropType {
-    WHEAT   = 0,
-    POTATO  = 1,
-    PUMPKIN = 2
+    WHEAT    = 0,
+    POTATO   = 1,
+    PUMPKIN  = 2,
+    CORN     = 3,
+    MUSHROOM = 4,
+    COFFEE   = 5
 };
 
 // ── Field size (injected by server) ───────────────────────────

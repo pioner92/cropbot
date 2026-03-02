@@ -158,12 +158,6 @@ header {
 .stat.energy b { color: var(--ac); }
 .stat.score b { color: var(--ac); }
 
-#status-stat {
-  font-size: calc(13px * var(--ui-scale));
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
 /* Settings button */
 #settings-btn {
   background: none;
@@ -186,6 +180,252 @@ header {
   border-color: var(--ac);
   color: var(--ac);
 }
+#guide-btn {
+  background: var(--bl-dim);
+  border: 1px solid rgba(96, 184, 255, 0.2);
+  border-radius: 6px;
+  color: var(--bl);
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 10px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+#guide-btn:hover {
+  background: var(--bl);
+  border-color: transparent;
+  color: #fff;
+}
+
+/* ── Guide Modal ─────────────────────────────────────────────── */
+.s-modal.guide-modal-wide {
+  width: min(1240px, 92vw);
+  max-height: 90vh;
+}
+.s-modal.guide-modal-wide .s-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 32px;
+  align-items: start;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.guide-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.guide-section-title {
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--tx-1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--bd-1);
+}
+.guide-section-title .g-icon { font-size: calc(16px * var(--ui-scale)); }
+
+.guide-text {
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--tx-2);
+  line-height: 1.65;
+}
+.guide-text b { color: var(--tx-1); }
+.guide-text code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(11px * var(--ui-scale));
+  background: var(--bg-4);
+  border: 1px solid var(--bd-2);
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: var(--ac);
+}
+
+.guide-code {
+  background: var(--bg-4);
+  border: 1px solid var(--bd-2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(12px * var(--ui-scale));
+  line-height: 1.7;
+  color: var(--tx-2);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.guide-code .gc-kw  { color: var(--pu); }
+.guide-code .gc-fn  { color: var(--bl); }
+.guide-code .gc-num { color: var(--am); }
+.guide-code .gc-cmt { color: var(--tx-3); font-style: italic; }
+.guide-code .gc-ty  { color: var(--ac); }
+.guide-code .gc-str { color: #f28b54; }
+
+/* State chain */
+.guide-state-chain {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.guide-state {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 700;
+  background: var(--state-bg, #1a1a1a);
+  color: var(--state-fg, #888);
+  border: 1px solid var(--state-bd, rgba(255,255,255,0.08));
+  white-space: nowrap;
+}
+.guide-chain-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.guide-chain-fn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(10px * var(--ui-scale));
+  color: var(--tx-3);
+  white-space: nowrap;
+}
+.guide-chain-sym {
+  color: var(--tx-3);
+  font-size: calc(13px * var(--ui-scale));
+  line-height: 1;
+}
+
+/* Grid visualization */
+.guide-grid-wrap {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 44px);
+  grid-template-rows: repeat(4, 28px);
+  gap: 2px;
+  flex-shrink: 0;
+}
+.guide-grid-cell {
+  background: var(--bg-4);
+  border: 1px solid var(--bd-2);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(10px * var(--ui-scale));
+  color: var(--tx-3);
+}
+.guide-grid-cell.gc-base {
+  background: rgba(56,213,140,0.12);
+  border-color: rgba(56,213,140,0.4);
+  color: var(--ac);
+  font-weight: 700;
+}
+.guide-grid-cell.gc-axis {
+  background: none;
+  border-color: transparent;
+  color: var(--tx-3);
+  font-size: calc(11px * var(--ui-scale));
+}
+.guide-grid-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--tx-2);
+}
+.guide-grid-legend b { color: var(--tx-1); font-family: 'JetBrains Mono', monospace; }
+
+/* Tip box */
+.guide-tip {
+  display: flex;
+  gap: 10px;
+  background: rgba(56,213,140,0.06);
+  border: 1px solid rgba(56,213,140,0.2);
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--tx-2);
+  line-height: 1.6;
+}
+.guide-tip-icon { font-size: calc(16px * var(--ui-scale)); flex-shrink: 0; margin-top: 1px; }
+.guide-tip.warn {
+  background: rgba(240,184,74,0.06);
+  border-color: rgba(240,184,74,0.2);
+}
+
+/* Stats row */
+.guide-stats-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.guide-stat-card {
+  background: var(--bg-4);
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 120px;
+}
+.guide-stat-label {
+  font-size: calc(10px * var(--ui-scale));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tx-3);
+}
+.guide-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--tx-1);
+}
+
+/* Crop mini-table */
+.guide-crop-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: calc(11px * var(--ui-scale));
+}
+.guide-crop-table th {
+  text-align: left;
+  padding: 4px 8px;
+  color: var(--tx-3);
+  font-weight: 600;
+  font-size: calc(10px * var(--ui-scale));
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  border-bottom: 1px solid var(--bd-1);
+}
+.guide-crop-table td {
+  padding: 5px 8px;
+  color: var(--tx-2);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-family: 'JetBrains Mono', monospace;
+}
+.guide-crop-table td:first-child { font-family: 'Inter', sans-serif; color: var(--tx-1); }
+.guide-crop-table .locked-row { opacity: 0.45; }
+.guide-crop-table .locked-row td:last-child { color: var(--am); }
 #extra-btn {
   background: var(--re-dim);
   border: 1px solid rgba(240, 96, 96, 0.2);
@@ -350,6 +590,14 @@ header {
   font-size: calc(12px * var(--ui-scale));
   font-weight: 600;
   color: var(--tx-1);
+}
+.seed-item.seed-locked {
+  opacity: 0.4;
+  filter: grayscale(0.6);
+  border-color: rgba(255,255,255,0.06);
+}
+.seed-item.seed-locked b {
+  color: var(--tx-3);
 }
 
 .seeds-hint {
@@ -573,7 +821,11 @@ header {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.1s;
 }
+.api-fn-row:hover { background: rgba(255,255,255,0.04); }
 .api-fn-row:last-child { padding-bottom: 8px; }
 
 .t-void  { color: var(--tx-3); }
@@ -637,6 +889,7 @@ header {
   align-items: center;
   gap: 8px;
   transition: border-color 0.15s;
+  position: relative;
 }
 .crop-card:hover { border-color: var(--bd-3); }
 
@@ -657,6 +910,20 @@ header {
 .crop-stat.time b { color: var(--tx-2); }
 .crop-stat.gold b { color: var(--am); }
 .crop-stat.seed b { color: var(--ac); }
+.crop-note { font-size: calc(10px * var(--ui-scale)); color: #60aaff; margin-top: 2px; }
+.crop-card.crop-locked {
+  opacity: 0.38;
+  filter: grayscale(0.7);
+  position: relative;
+}
+.crop-card.crop-locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  font-size: calc(14px * var(--ui-scale));
+}
 
 /* Grid info */
 .api-grid-info {
@@ -690,6 +957,9 @@ header {
   border: 1px solid var(--bd-2);
   border-radius: 12px;
   width: 440px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.03),
     0 24px 80px rgba(0, 0, 0, 0.75);
@@ -737,6 +1007,9 @@ header {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .s-section-label {
@@ -993,8 +1266,63 @@ header {
 }
 .x-base-hint.hidden { display: none; }
 
+/* ── Supplier cards ──────────────────────────────────────────── */
+.supplier-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--bd-2);
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+.supplier-item.sup-unlocked {
+  border-color: rgba(56,213,140,0.35);
+  background: rgba(56,213,140,0.05);
+}
+.sup-icon {
+  font-size: calc(18px * var(--ui-scale));
+  flex-shrink: 0;
+}
+.sup-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.sup-name {
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--tx-1);
+}
+.sup-desc {
+  font-size: calc(10px * var(--ui-scale));
+  color: var(--tx-3);
+}
+.sup-cost {
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--am);
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: right;
+}
+.sup-btn {
+  padding: 6px 12px;
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sup-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* ── Upgrade cards ───────────────────────────────────────────── */
-.x-modal-wide { width: 500px; }
+.s-modal.x-modal-wide { width: 500px; }
 
 .x-gold-badge {
   font-size: calc(13px * var(--ui-scale));
@@ -1132,17 +1460,16 @@ header {
   pointer-events: none;
   background: var(--bg-4);
   border: 1px solid var(--bd-3);
-  border-radius: 6px;
-  padding: 5px 10px;
+  border-radius: 7px;
+  padding: 7px 12px;
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
+  font-size: calc(13px * var(--ui-scale));
   font-weight: 500;
   color: var(--tx-1);
-  line-height: 1.45;
-  white-space: nowrap;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.55);
-  max-width: 320px;
+  line-height: 1.55;
   white-space: normal;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.65);
+  max-width: 300px;
   transition: opacity 0.08s;
 }
 #api-tooltip.hidden { display: none; }
@@ -1166,10 +1493,10 @@ header {
     <div class="stat water">💧 Tank <b id="tank-val">50</b><span style="color:var(--tx-3)" id="tank-max-disp">/50</span></div>
     <div class="stat energy">🔋 Energy <b id="energy-val">120</b><span style="color:var(--tx-3)" id="energy-max-disp">/120</span></div>
     <div class="stat">Tick <b id="tick-val">0</b></div>
-    <div class="stat" id="status-stat">⏹ Stopped</div>
   </div>
 
   <button id="extra-btn" title="Emergency Supplies">🚁 Extra</button>
+  <button id="guide-btn" title="How to play">📖 Guide</button>
   <button id="settings-btn" title="Settings">⚙</button>
 </header>
 
@@ -1201,7 +1528,10 @@ header {
       <span class="seeds-label">Seeds</span>
       <div class="seed-item">🌾 <b id="seeds-wheat">10</b></div>
       <div class="seed-item">🥔 <b id="seeds-potato">5</b></div>
-      <div class="seed-item">🎃 <b id="seeds-pumpkin">2</b></div>
+      <div class="seed-item seed-locked" id="seed-item-pumpkin">🎃 <b id="seeds-pumpkin">🔒</b></div>
+      <div class="seed-item seed-locked" id="seed-item-corn">🌽 <b id="seeds-corn">🔒</b></div>
+      <div class="seed-item seed-locked" id="seed-item-mushroom">🍄 <b id="seeds-mushroom">🔒</b></div>
+      <div class="seed-item seed-locked" id="seed-item-coffee">☕ <b id="seeds-coffee">🔒</b></div>
       <span class="seeds-hint">buy_seeds(CropType::WHEAT, 10)</span>
     </div>
 
@@ -1267,6 +1597,9 @@ header {
           <span class="enum-badge crop">WHEAT</span>
           <span class="enum-badge crop">POTATO</span>
           <span class="enum-badge crop">PUMPKIN</span>
+          <span class="enum-badge crop">CORN</span>
+          <span class="enum-badge crop">MUSHROOM</span>
+          <span class="enum-badge crop">COFFEE</span>
         </div>
       </div>
     </div>
@@ -1297,14 +1630,48 @@ header {
             </div>
           </div>
         </div>
-        <div class="crop-card">
+        <div class="crop-card crop-locked" id="crop-card-2">
           <span class="crop-icon">🎃</span>
           <div class="crop-info">
             <div class="crop-name">CropType::PUMPKIN</div>
             <div class="crop-stats">
               <span class="crop-stat time">⏱ <b>25+40</b></span>
-              <span class="crop-stat gold">💰 <b>12</b></span>
+              <span class="crop-stat gold">💰 <b>10</b></span>
+              <span class="crop-stat seed">🌱 <b>5</b></span>
+            </div>
+          </div>
+        </div>
+        <div class="crop-card crop-locked" id="crop-card-3">
+          <span class="crop-icon">🌽</span>
+          <div class="crop-info">
+            <div class="crop-name">CropType::CORN</div>
+            <div class="crop-stats">
+              <span class="crop-stat time">⏱ <b>18+27</b></span>
+              <span class="crop-stat gold">💰 <b>9</b></span>
+              <span class="crop-stat seed">🌱 <b>3</b></span>
+            </div>
+          </div>
+        </div>
+        <div class="crop-card crop-locked" id="crop-card-4">
+          <span class="crop-icon">🍄</span>
+          <div class="crop-info">
+            <div class="crop-name">CropType::MUSHROOM</div>
+            <div class="crop-stats">
+              <span class="crop-stat time">⏱ <b>15+25</b></span>
+              <span class="crop-stat gold">💰 <b>10</b></span>
               <span class="crop-stat seed">🌱 <b>4</b></span>
+            </div>
+            <div class="crop-note">water &gt; 40 to grow</div>
+          </div>
+        </div>
+        <div class="crop-card crop-locked" id="crop-card-5">
+          <span class="crop-icon">☕</span>
+          <div class="crop-info">
+            <div class="crop-name">CropType::COFFEE</div>
+            <div class="crop-stats">
+              <span class="crop-stat time">⏱ <b>40+80</b></span>
+              <span class="crop-stat gold">💰 <b>35</b></span>
+              <span class="crop-stat seed">🌱 <b>20</b></span>
             </div>
           </div>
         </div>
@@ -1336,7 +1703,7 @@ header {
       <div class="api-section-header">Query · 0 ticks</div>
       <div class="api-fn-row" data-desc="State of the current cell: EMPTY/TILLED/PLANTED/GROWING/READY/BASE."><span class="t-state">CellState</span> <span class="fn-name">get_cell_state</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="State of the cell at coordinates (x, y)."><span class="t-state">CellState</span> <span class="fn-name">get_cell_state</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Crop type in the current cell: WHEAT, POTATO or PUMPKIN."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Crop type in the current cell: WHEAT, POTATO, PUMPKIN, CORN, MUSHROOM or COFFEE."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Crop type in the cell at (x, y)."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
       <div class="api-fn-row" data-desc="Water level of the current cell (0–100). Growth pauses when 0."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Water level of the cell at (x, y)."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
@@ -1470,8 +1837,51 @@ header {
 
     <div class="s-body">
 
+      <!-- ── Crop Suppliers ────────────────────────────────── -->
+      <div class="s-section-label" style="color:#38d58c">🌱 Crop Suppliers</div>
+
+      <div class="supplier-item" id="sup-2">
+        <span class="sup-icon">🎃</span>
+        <div class="sup-info">
+          <span class="sup-name">Pumpkin Supplier</span>
+          <span class="sup-desc">Slow growth, high absolute value</span>
+        </div>
+        <span class="sup-cost" id="sup-cost-2">80 💰</span>
+        <button class="btn sup-btn" id="sup-btn-2" onclick="buySupplier(2)">Unlock</button>
+      </div>
+
+      <div class="supplier-item" id="sup-3">
+        <span class="sup-icon">🌽</span>
+        <div class="sup-info">
+          <span class="sup-name">Corn Supplier</span>
+          <span class="sup-desc">Best efficiency — 0.133 g/tick</span>
+        </div>
+        <span class="sup-cost" id="sup-cost-3">280 💰</span>
+        <button class="btn sup-btn" id="sup-btn-3" onclick="buySupplier(3)">Unlock</button>
+      </div>
+
+      <div class="supplier-item" id="sup-4">
+        <span class="sup-icon">🍄</span>
+        <div class="sup-info">
+          <span class="sup-name">Mushroom Supplier</span>
+          <span class="sup-desc">Grows only if water &gt; 40 — needs smart watering</span>
+        </div>
+        <span class="sup-cost" id="sup-cost-4">650 💰</span>
+        <button class="btn sup-btn" id="sup-btn-4" onclick="buySupplier(4)">Unlock</button>
+      </div>
+
+      <div class="supplier-item" id="sup-5">
+        <span class="sup-icon">☕</span>
+        <div class="sup-info">
+          <span class="sup-name">Coffee Supplier</span>
+          <span class="sup-desc">Endgame — +15g per harvest, water-intensive</span>
+        </div>
+        <span class="sup-cost" id="sup-cost-5">1500 💰</span>
+        <button class="btn sup-btn" id="sup-btn-5" onclick="buySupplier(5)">Unlock</button>
+      </div>
+
       <!-- ── Upgrades ─────────────────────────────────────── -->
-      <div class="s-section-label" style="color:var(--ac)">⬆ Permanent Upgrades</div>
+      <div class="s-section-label" style="color:var(--ac);margin-top:4px">⬆ Permanent Upgrades</div>
 
       <!-- Tank capacity upgrade -->
       <div class="upg-card">
@@ -1544,6 +1954,256 @@ header {
     </div>
   </div>
 </div>
+
+<!-- Guide Modal -->
+<div id="guide-overlay" class="s-overlay hidden">
+  <div class="s-modal guide-modal-wide">
+    <div class="s-head">
+      <span class="s-head-icon">📖</span>
+      <h2>How to Play</h2>
+      <button class="s-close" id="guide-close-btn">✕</button>
+    </div>
+
+    <div class="s-body">
+
+      <!-- ── Grid & Movement ──────────────────────────── -->
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="g-icon">🗺</span> Grid &amp; Movement</div>
+
+        <div class="guide-grid-wrap">
+          <div>
+            <div class="guide-grid">
+              <!-- row 0: axis header -->
+              <div class="guide-grid-cell gc-axis"></div>
+              <div class="guide-grid-cell gc-axis">x=0</div>
+              <div class="guide-grid-cell gc-axis">x=1</div>
+              <div class="guide-grid-cell gc-axis">x=2 →</div>
+              <!-- row 1 -->
+              <div class="guide-grid-cell gc-axis">y=0</div>
+              <div class="guide-grid-cell gc-base">BASE</div>
+              <div class="guide-grid-cell">(1,0)</div>
+              <div class="guide-grid-cell">(2,0)</div>
+              <!-- row 2 -->
+              <div class="guide-grid-cell gc-axis">y=1</div>
+              <div class="guide-grid-cell">(0,1)</div>
+              <div class="guide-grid-cell">(1,1)</div>
+              <div class="guide-grid-cell">(2,1)</div>
+              <!-- row 3 -->
+              <div class="guide-grid-cell gc-axis">y=2 ↓</div>
+              <div class="guide-grid-cell">(0,2)</div>
+              <div class="guide-grid-cell">(1,2)</div>
+              <div class="guide-grid-cell">(2,2)</div>
+            </div>
+          </div>
+          <div class="guide-grid-legend">
+            <div><b>move_east()</b> → x + 1</div>
+            <div><b>move_west()</b> → x − 1</div>
+            <div><b>move_south()</b> → y + 1</div>
+            <div><b>move_north()</b> → y − 1</div>
+            <div style="margin-top:4px;color:var(--tx-3)">Each move costs 1 tick and 1 energy.</div>
+            <div><b>get_x()</b> / <b>get_y()</b> — current position</div>
+            <div>Field size: <b>GRID_W × GRID_H</b> (10×10 by default)</div>
+          </div>
+        </div>
+
+        <div class="guide-code"><span class="gc-cmt">// Sweep the first row east, then return</span>
+<span class="gc-kw">while</span> (<span class="gc-fn">get_x</span>() &lt; GRID_W - <span class="gc-num">1</span>) <span class="gc-fn">move_east</span>();
+<span class="gc-kw">while</span> (<span class="gc-fn">get_x</span>() &gt; <span class="gc-num">0</span>)          <span class="gc-fn">move_west</span>();</div>
+      </div>
+
+      <!-- ── Farming Cycle ────────────────────────────── -->
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="g-icon">🌱</span> Farming Cycle</div>
+
+        <div class="guide-state-chain">
+          <div class="guide-state" style="--state-bg:#1c1008;--state-fg:#8a6040;--state-bd:rgba(138,96,64,0.3)">EMPTY</div>
+          <div class="guide-chain-arrow"><div class="guide-chain-fn">till()</div><div class="guide-chain-sym">→</div></div>
+          <div class="guide-state" style="--state-bg:#2a1808;--state-fg:#b07848;--state-bd:rgba(176,120,72,0.3)">TILLED</div>
+          <div class="guide-chain-arrow"><div class="guide-chain-fn">plant()</div><div class="guide-chain-sym">→</div></div>
+          <div class="guide-state" style="--state-bg:#0e2008;--state-fg:#70cc30;--state-bd:rgba(112,204,48,0.3)">PLANTED</div>
+          <div class="guide-chain-arrow"><div class="guide-chain-fn">time1 ticks</div><div class="guide-chain-sym">→</div></div>
+          <div class="guide-state" style="--state-bg:#1e1e00;--state-fg:#c8d830;--state-bd:rgba(200,216,48,0.3)">GROWING</div>
+          <div class="guide-chain-arrow"><div class="guide-chain-fn">time2 ticks</div><div class="guide-chain-sym">→</div></div>
+          <div class="guide-state" style="--state-bg:#1e0e00;--state-fg:#ffd000;--state-bd:rgba(255,208,0,0.3)">READY</div>
+          <div class="guide-chain-arrow"><div class="guide-chain-fn">harvest()</div><div class="guide-chain-sym">→</div></div>
+          <div class="guide-state" style="--state-bg:#1c1008;--state-fg:#8a6040;--state-bd:rgba(138,96,64,0.3)">EMPTY</div>
+        </div>
+
+        <div class="guide-text">
+          Growth only progresses when <b>water_level &gt; 0</b>. Each farming action costs <b>1 tick + 1 energy</b>.
+          Use <code>get_cell_state()</code> to check which state a cell is in before acting.
+        </div>
+
+        <div class="guide-code"><span class="gc-kw">while</span> (<span class="gc-num">true</span>) {
+    <span class="gc-ty">CellState</span> s = <span class="gc-fn">get_cell_state</span>();
+    <span class="gc-kw">if</span> (s == <span class="gc-ty">CellState</span>::EMPTY)   <span class="gc-fn">till</span>();
+    <span class="gc-kw">if</span> (s == <span class="gc-ty">CellState</span>::TILLED)  <span class="gc-fn">plant</span>(<span class="gc-ty">CropType</span>::WHEAT);
+    <span class="gc-kw">if</span> (s == <span class="gc-ty">CellState</span>::READY)   <span class="gc-fn">harvest</span>();
+    <span class="gc-fn">move_east</span>();
+}</div>
+      </div>
+
+      <!-- ── The Base ─────────────────────────────────── -->
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="g-icon">🏠</span> The Base</div>
+
+        <div class="guide-stats-row">
+          <div class="guide-stat-card">
+            <div class="guide-stat-label">⚡ Energy recharge</div>
+            <div class="guide-stat-value">+10 / tick</div>
+          </div>
+          <div class="guide-stat-card">
+            <div class="guide-stat-label">💧 Tank refill</div>
+            <div class="guide-stat-value">+8 / tick</div>
+          </div>
+          <div class="guide-stat-card">
+            <div class="guide-stat-label">📍 Location</div>
+            <div class="guide-stat-value">(0, 0)</div>
+          </div>
+        </div>
+
+        <div class="guide-text">
+          The base tile is at <b>(0, 0)</b>. Farming actions (<code>till</code>, <code>plant</code>, <code>water</code>, <code>harvest</code>)
+          are <b>no-ops</b> on the base — they do nothing and waste a tick.
+          Use <code>is_at_base()</code> to check your position.
+        </div>
+
+        <div class="guide-tip">
+          <span class="guide-tip-icon">💡</span>
+          <div>Return to base when energy or tank runs low. The drone recharges automatically —
+          no function call needed. At max upgrades: 360 energy, 150 tank.</div>
+        </div>
+
+        <div class="guide-code"><span class="gc-cmt">// Go home to recharge, then come back</span>
+<span class="gc-kw">if</span> (<span class="gc-fn">get_energy</span>() &lt; <span class="gc-num">20</span> || <span class="gc-fn">get_tank</span>() &lt; <span class="gc-num">15</span>) {
+    <span class="gc-kw">while</span> (!<span class="gc-fn">is_at_base</span>()) { <span class="gc-fn">move_west</span>(); <span class="gc-fn">move_north</span>(); }
+    <span class="gc-fn">wait</span>(<span class="gc-num">20</span>);  <span class="gc-cmt">// charge up</span>
+}</div>
+      </div>
+
+      <!-- ── Water System ──────────────────────────────── -->
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="g-icon">💧</span> Water System</div>
+
+        <div class="guide-stats-row">
+          <div class="guide-stat-card">
+            <div class="guide-stat-label">Cell drain</div>
+            <div class="guide-stat-value">−2 / tick</div>
+          </div>
+          <div class="guide-stat-card">
+            <div class="guide-stat-label">water() gives</div>
+            <div class="guide-stat-value">+50 water</div>
+          </div>
+          <div class="guide-stat-card">
+            <div class="guide-stat-label">water() costs</div>
+            <div class="guide-stat-value">15 tank units</div>
+          </div>
+          <div class="guide-stat-card">
+            <div class="guide-stat-label">Tank (base)</div>
+            <div class="guide-stat-value">50 units</div>
+          </div>
+        </div>
+
+        <div class="guide-text">
+          Every <b>PLANTED</b> or <b>GROWING</b> cell loses <b>2 water/tick</b>.
+          When water hits 0, growth <b>pauses</b> — the crop doesn't die, it just stops progressing.
+          Water can go above 50 via <code>water()</code> up to the cell max of <b>100</b>.
+        </div>
+
+        <div class="guide-tip warn">
+          <span class="guide-tip-icon">🍄</span>
+          <div><b>Mushroom</b> is special — it only grows when <code>water_level &gt; 40</code>.
+          You must water proactively to keep the level high, not reactively when it runs out.</div>
+        </div>
+
+        <div class="guide-code"><span class="gc-kw">if</span> (<span class="gc-fn">get_water_level</span>() &lt; <span class="gc-num">30</span> &amp;&amp; <span class="gc-fn">get_tank</span>() &gt;= <span class="gc-num">15</span>)
+    <span class="gc-fn">water</span>();  <span class="gc-cmt">// costs 15 tank, gives cell +50 water</span></div>
+      </div>
+
+      <!-- ── Economy ───────────────────────────────────── -->
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="g-icon">💰</span> Economy</div>
+
+        <div class="guide-text">
+          <b>Gold</b> is earned by harvesting crops. Spend it on seeds, water packs, upgrades, and supplier unlocks.
+          You start with <b>50 gold</b>, <b>10 wheat seeds</b> and <b>5 potato seeds</b>.
+        </div>
+
+        <table class="guide-crop-table">
+          <thead>
+            <tr><th>Crop</th><th>Growth</th><th>Sell</th><th>Seed</th><th>g/tick</th><th>Unlock</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>🌾 Wheat</td>   <td>8+12</td>  <td>2 💰</td>  <td>1 💰</td>  <td>0.050</td><td style="color:var(--ac)">free</td></tr>
+            <tr><td>🥔 Potato</td>  <td>14+20</td> <td>6 💰</td>  <td>2 💰</td>  <td>0.118</td><td style="color:var(--ac)">free</td></tr>
+            <tr class="locked-row"><td>🎃 Pumpkin</td> <td>25+40</td> <td>10 💰</td> <td>5 💰</td>  <td>0.077</td><td>80 💰</td></tr>
+            <tr class="locked-row"><td>🌽 Corn</td>    <td>18+27</td> <td>9 💰</td>  <td>3 💰</td>  <td>0.133</td><td>280 💰</td></tr>
+            <tr class="locked-row"><td>🍄 Mushroom</td><td>15+25</td> <td>10 💰</td> <td>4 💰</td>  <td>0.150</td><td>650 💰</td></tr>
+            <tr class="locked-row"><td>☕ Coffee</td>  <td>40+80</td> <td>35 💰</td> <td>20 💰</td> <td>0.125</td><td>1500 💰</td></tr>
+          </tbody>
+        </table>
+
+        <div class="guide-code"><span class="gc-fn">buy_seeds</span>(<span class="gc-ty">CropType</span>::POTATO, <span class="gc-num">20</span>);   <span class="gc-cmt">// 2 gold each → costs 40 gold</span>
+<span class="gc-fn">buy_water</span>(<span class="gc-num">1</span>);                      <span class="gc-cmt">// +50 tank units, costs 10 gold</span></div>
+      </div>
+
+      <!-- ── Crop Suppliers ────────────────────────────── -->
+      <div class="guide-section">
+        <div class="guide-section-title"><span class="g-icon">🌿</span> Crop Suppliers</div>
+
+        <div class="guide-text">
+          Four crop types are locked by default. Unlock them by purchasing a <b>Supplier</b>
+          in the <b>🚁 Extra</b> panel. Once unlocked, you can buy seeds and plant that crop.
+          Suppliers persist until you reset the game.
+        </div>
+
+        <div class="guide-tip">
+          <span class="guide-tip-icon">💡</span>
+          <div>Unlock <b>Corn</b> first — it has the best gold/tick of the non-special crops (0.133).
+          <b>Mushroom</b> needs a smart watering algorithm to beat it (0.150 g/tick when water is maintained).
+          <b>Coffee</b> gives the highest absolute profit: <b>+15 gold per harvest</b>.</div>
+        </div>
+      </div>
+
+      <!-- ── Quick Start ───────────────────────────────── -->
+      <div class="guide-section" style="grid-column: 1 / -1">
+        <div class="guide-section-title"><span class="g-icon">⚡</span> Quick Start Algorithm</div>
+
+        <div class="guide-text">A complete working program. Sweeps the field east→west, farms every cell, returns to base when resources are low.</div>
+
+        <div class="guide-code"><span class="gc-kw">int</span> <span class="gc-fn">main</span>() {
+    <span class="gc-kw">while</span> (<span class="gc-num">true</span>) {
+
+        <span class="gc-cmt">// Recharge if low on energy or tank</span>
+        <span class="gc-kw">if</span> (<span class="gc-fn">get_energy</span>() &lt; <span class="gc-num">30</span> || <span class="gc-fn">get_tank</span>() &lt; <span class="gc-num">30</span>) {
+            <span class="gc-kw">while</span> (<span class="gc-fn">get_x</span>() &gt; <span class="gc-num">0</span>) <span class="gc-fn">move_west</span>();
+            <span class="gc-kw">while</span> (<span class="gc-fn">get_y</span>() &gt; <span class="gc-num">0</span>) <span class="gc-fn">move_north</span>();
+            <span class="gc-fn">wait</span>(<span class="gc-num">15</span>);
+            <span class="gc-kw">continue</span>;
+        }
+
+        <span class="gc-cmt">// Buy seeds if needed</span>
+        <span class="gc-kw">if</span> (<span class="gc-fn">get_seeds</span>(<span class="gc-ty">CropType</span>::POTATO) &lt; <span class="gc-num">5</span>)
+            <span class="gc-fn">buy_seeds</span>(<span class="gc-ty">CropType</span>::POTATO, <span class="gc-num">10</span>);
+
+        <span class="gc-cmt">// Farm the current cell</span>
+        <span class="gc-ty">CellState</span> s = <span class="gc-fn">get_cell_state</span>();
+        <span class="gc-kw">if</span> (s == <span class="gc-ty">CellState</span>::EMPTY)   <span class="gc-fn">till</span>();
+        <span class="gc-kw">if</span> (s == <span class="gc-ty">CellState</span>::TILLED)  <span class="gc-fn">plant</span>(<span class="gc-ty">CropType</span>::POTATO);
+        <span class="gc-kw">if</span> (s == <span class="gc-ty">CellState</span>::READY)   <span class="gc-fn">harvest</span>();
+        <span class="gc-kw">if</span> (<span class="gc-fn">get_water_level</span>() &lt; <span class="gc-num">25</span>) <span class="gc-fn">water</span>();
+
+        <span class="gc-cmt">// Move: sweep east, then step south and go back west</span>
+        <span class="gc-kw">if</span> (<span class="gc-fn">get_x</span>() &lt; GRID_W - <span class="gc-num">1</span>) { <span class="gc-fn">move_east</span>(); <span class="gc-kw">continue</span>; }
+        <span class="gc-kw">if</span> (<span class="gc-fn">get_y</span>() &lt; GRID_H - <span class="gc-num">1</span>)   <span class="gc-fn">move_south</span>();
+        <span class="gc-kw">while</span> (<span class="gc-fn">get_x</span>() &gt; <span class="gc-num">0</span>) <span class="gc-fn">move_west</span>();
+    }
+}</div>
+      </div>
+
+    </div><!-- /s-body -->
+  </div><!-- /s-modal -->
+</div><!-- /guide-overlay -->
 
 <!-- Monaco Editor -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>

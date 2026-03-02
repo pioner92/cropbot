@@ -13,19 +13,31 @@ let CELL   = 60; // px per cell (recalculated on grid resize)
 
 const State    = { EMPTY: 0, TILLED: 1, PLANTED: 2, GROWING: 3, READY: 4, BASE: 5 };
 const Dir      = { NORTH: 0, EAST: 1, SOUTH: 2, WEST: 3 };
-const CropType = { WHEAT: 0, POTATO: 1, PUMPKIN: 2 };
+const CropType = { WHEAT: 0, POTATO: 1, PUMPKIN: 2, CORN: 3, MUSHROOM: 4, COFFEE: 5 };
 
 // Per-crop config: growth ticks, harvest gold, seed cost, visual colors
+// supplierCost: gold to unlock supplier (0 = unlocked from start)
+// minWater: cell water must be > minWater for growth to proceed (mushroom inverts this)
 const CROPS = [
   // WHEAT  — fast, cheap
-  { name: 'Wheat',    time1: 8,  time2: 12, value: 2,  seedCost: 1,
+  { name: 'Wheat',    time1: 8,  time2: 12, value: 2,  seedCost: 1,  supplierCost: 0,
     colors: { planted: '#70cc30', growing: '#c8d830', ready: '#ffd000' } },
   // POTATO — medium
-  { name: 'Potato',   time1: 14, time2: 20, value: 6,  seedCost: 2,
+  { name: 'Potato',   time1: 14, time2: 20, value: 6,  seedCost: 2,  supplierCost: 0,
     colors: { planted: '#50bc40', growing: '#38a828', ready: '#d8a840' } },
-  // PUMPKIN — slow, expensive
-  { name: 'Pumpkin',  time1: 25, time2: 40, value: 10, seedCost: 5,
+  // PUMPKIN — slow, high absolute value
+  { name: 'Pumpkin',  time1: 25, time2: 40, value: 10, seedCost: 5,  supplierCost: 80,
     colors: { planted: '#40b030', growing: '#e86820', ready: '#ff5500' } },
+  // CORN — best g/tick of non-special crops (0.133)
+  { name: 'Corn',     time1: 18, time2: 27, value: 9,  seedCost: 3,  supplierCost: 280,
+    colors: { planted: '#78c830', growing: '#c8d020', ready: '#f8c000' } },
+  // MUSHROOM — inverted water: grows only if water > 40
+  { name: 'Mushroom', time1: 15, time2: 25, value: 10, seedCost: 4,  supplierCost: 650,
+    minWater: 40,
+    colors: { planted: '#806040', growing: '#c07840', ready: '#e8a860' } },
+  // COFFEE — endgame, highest absolute profit per harvest
+  { name: 'Coffee',   time1: 40, time2: 80, value: 35, seedCost: 20, supplierCost: 1500,
+    colors: { planted: '#508030', growing: '#704820', ready: '#c05010' } },
 ];
 
 // Non-crop cell base colors
@@ -80,9 +92,10 @@ const game = {
 // Economy — lives outside game{} so Reset doesn't wipe it (optional design choice)
 const eco = {
   gold:  50,
-  seeds: [10, 5, 2],  // [WHEAT, POTATO, PUMPKIN]
+  seeds: [10, 5, 0, 0, 0, 0],  // [WHEAT, POTATO, PUMPKIN, CORN, MUSHROOM, COFFEE]
   tank:   TANK_MAX,
   energy: ENERGY_START,
+  unlockedCrops: new Set([0, 1]),  // WHEAT, POTATO unlocked by default
 };
 
 function initGrid() {
@@ -103,9 +116,10 @@ function initGrid() {
   TANK_MAX   = TANK_MAX_BASE;
   ENERGY_MAX = ENERGY_MAX_BASE;
   eco.gold  = 50;
-  eco.seeds = [10, 5, 2];
+  eco.seeds = [10, 5, 0, 0, 0, 0];
   eco.tank   = TANK_MAX;
   eco.energy = ENERGY_START;
+  eco.unlockedCrops = new Set([0, 1]);
 }
 
 function isDroneOnBase() {
@@ -120,8 +134,10 @@ function growTick() {
       const crop = cell.cropType >= 0 ? CROPS[cell.cropType] : null;
 
       // Growth and drain: check water BEFORE draining so a plant can grow on its last tick of water
+      // minWater: normal crops need water > 0; mushroom needs water > 40 (inverted mechanic)
       if ((cell.state === State.PLANTED || cell.state === State.GROWING) && crop) {
-        if (cell.waterLevel > 0) {
+        const growThreshold = crop.minWater ?? 0;
+        if (cell.waterLevel > growThreshold) {
           if (cell.state === State.PLANTED) {
             cell.growTimer++;
             if (cell.growTimer >= crop.time1) {
@@ -492,6 +508,119 @@ function drawCrop(cx, cy, scale, state, cropType) {
       fo('#33aa22', 'rgba(10,50,5,0.55)', 0.8);
       ctx.lineCap = 'butt';
     }
+
+  } else if (cropType === CropType.CORN) {
+
+    if (state === State.PLANTED) {
+      ctx.strokeStyle = '#78c830'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, s*0.55); ctx.lineTo(0, -s*0.1); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(-s*0.28, s*0.2, s*0.26, s*0.1, -0.5, 0, Math.PI*2);
+      fo('#90d840', 'rgba(20,55,0,0.6)', 0.7);
+      ctx.beginPath(); ctx.ellipse(s*0.28, -s*0.02, s*0.26, s*0.1, 0.5, 0, Math.PI*2);
+      fo('#90d840', 'rgba(20,55,0,0.6)', 0.7);
+
+    } else if (state === State.GROWING) {
+      // Tall stalk with wide leaves
+      ctx.strokeStyle = '#68b828'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, s*0.7); ctx.lineTo(0, -s*0.55); ctx.stroke();
+      for (const [side, hy] of [[-1, s*0.2],[1, -s*0.1]]) {
+        ctx.beginPath(); ctx.ellipse(side*s*0.42, hy, s*0.42, s*0.11, side*0.4, 0, Math.PI*2);
+        fo('#80cc30', 'rgba(15,50,0,0.5)', 0.8);
+      }
+      // Cob nub
+      ctx.beginPath(); ctx.ellipse(s*0.12, -s*0.38, s*0.12, s*0.22, 0.2, 0, Math.PI*2);
+      fo('#d8b820', 'rgba(90,60,0,0.7)', 1);
+
+    } else { // READY
+      ctx.strokeStyle = '#50a020'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, s*0.75); ctx.lineTo(0, -s*0.65); ctx.stroke();
+      // Full cob
+      ctx.beginPath(); ctx.ellipse(s*0.18, -s*0.22, s*0.2, s*0.42, 0.25, 0, Math.PI*2);
+      fo('#f8c000', 'rgba(110,70,0,0.85)', 1.4);
+      // Husk leaves
+      ctx.beginPath(); ctx.ellipse(-s*0.06, -s*0.1, s*0.22, s*0.36, -0.3, 0, Math.PI*2);
+      fo('rgba(100,185,30,0.7)', 'rgba(20,70,0,0.5)', 0.8);
+      // Kernels hint
+      ctx.fillStyle = 'rgba(220,160,0,0.4)';
+      for (let ky = -3; ky <= 3; ky++) {
+        ctx.beginPath(); ctx.ellipse(s*0.18, -s*0.22+ky*s*0.1, s*0.08, s*0.05, 0.25, 0, Math.PI*2); ctx.fill();
+      }
+    }
+
+  } else if (cropType === CropType.MUSHROOM) {
+
+    if (state === State.PLANTED) {
+      // Tiny mushroom nub
+      ctx.beginPath(); ctx.ellipse(0, s*0.25, s*0.1, s*0.16, 0, 0, Math.PI*2);
+      fo('#c07840', 'rgba(60,30,5,0.7)', 0.8);
+      ctx.beginPath(); ctx.ellipse(0, s*0.12, s*0.22, s*0.14, 0, 0, Math.PI*2);
+      fo('#b05030', 'rgba(60,20,5,0.7)', 0.8);
+
+    } else if (state === State.GROWING) {
+      // Medium mushroom
+      ctx.beginPath(); ctx.ellipse(0, s*0.35, s*0.14, s*0.28, 0, 0, Math.PI*2);
+      fo('#c07838', 'rgba(70,35,5,0.7)', 1);
+      ctx.beginPath(); ctx.ellipse(0, -s*0.06, s*0.48, s*0.32, 0, 0, Math.PI*2);
+      fo('#c05028', 'rgba(80,20,5,0.75)', 1.2);
+      // Spots
+      ctx.fillStyle = 'rgba(255,220,180,0.55)';
+      for (const [dx,dy] of [[-s*0.2,-s*0.12],[s*0.18,-s*0.18],[0,-s*0.04]]) {
+        ctx.beginPath(); ctx.arc(dx, dy, s*0.07, 0, Math.PI*2); ctx.fill();
+      }
+
+    } else { // READY
+      // Big mushroom cap
+      ctx.beginPath(); ctx.ellipse(0, s*0.38, s*0.14, s*0.3, 0, 0, Math.PI*2);
+      fo('#d08840', 'rgba(80,40,5,0.8)', 1.2);
+      ctx.beginPath(); ctx.ellipse(0, -s*0.08, s*0.62, s*0.44, 0, 0, Math.PI*2);
+      fo('#e06030', 'rgba(100,25,5,0.85)', 1.8);
+      // White spots
+      ctx.fillStyle = 'rgba(255,235,200,0.7)';
+      for (const [dx,dy,dr] of [[-s*0.28,-s*0.14,s*0.1],[s*0.26,-s*0.2,s*0.09],[0,-s*0.06,s*0.11],[s*0.12,-s*0.32,s*0.07]]) {
+        ctx.beginPath(); ctx.arc(dx, dy, dr, 0, Math.PI*2); ctx.fill();
+      }
+      // Gills
+      ctx.strokeStyle = 'rgba(180,100,40,0.4)'; ctx.lineWidth = 0.7;
+      for (let gx = -4; gx <= 4; gx++) {
+        ctx.beginPath(); ctx.moveTo(gx*s*0.14, s*0.36); ctx.lineTo(gx*s*0.1, s*0.04); ctx.stroke();
+      }
+    }
+
+  } else if (cropType === CropType.COFFEE) {
+
+    if (state === State.PLANTED) {
+      // Seed in soil
+      ctx.beginPath(); ctx.ellipse(0, s*0.2, s*0.18, s*0.13, 0, 0, Math.PI*2);
+      fo('#703020', 'rgba(40,15,5,0.8)', 0.8);
+      ctx.strokeStyle = '#508030'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, s*0.08); ctx.lineTo(0, -s*0.12); ctx.stroke();
+
+    } else if (state === State.GROWING) {
+      // Leafy shrub
+      ctx.strokeStyle = '#508030'; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(0, s*0.6); ctx.lineTo(0, -s*0.1); ctx.stroke();
+      for (const [side, hy, ang] of [[-1, s*0.2, -0.5],[1, s*0.05, 0.5],[-1,-s*0.1, -0.3],[1,-s*0.2, 0.3]]) {
+        ctx.beginPath(); ctx.ellipse(side*s*0.35, hy, s*0.32, s*0.14, ang*side, 0, Math.PI*2);
+        fo('#508030', 'rgba(15,45,5,0.5)', 0.7);
+      }
+
+    } else { // READY
+      // Dense bush with red berries
+      ctx.strokeStyle = '#406828'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, s*0.65); ctx.lineTo(0, -s*0.1); ctx.stroke();
+      for (const [side, hy, ang] of [[-1, s*0.18, -0.5],[1, s*0.04, 0.5],[-1,-s*0.12,-0.3],[1,-s*0.24, 0.3]]) {
+        ctx.beginPath(); ctx.ellipse(side*s*0.36, hy, s*0.34, s*0.15, ang*side, 0, Math.PI*2);
+        fo('#527830', 'rgba(10,40,5,0.55)', 0.8);
+      }
+      // Coffee cherries (red berries)
+      const berries = [[-s*0.32, s*0.05],[s*0.28, -s*0.08],[-s*0.18, -s*0.28],[s*0.38, s*0.16],[0, s*0.32],[-s*0.38, -s*0.1]];
+      for (const [bx, by] of berries) {
+        ctx.beginPath(); ctx.arc(bx, by, s*0.1, 0, Math.PI*2);
+        fo('#c02010', 'rgba(80,5,0,0.85)', 0.8);
+        ctx.fillStyle = 'rgba(255,120,100,0.5)';
+        ctx.beginPath(); ctx.arc(bx - s*0.03, by - s*0.03, s*0.04, 0, Math.PI*2); ctx.fill();
+      }
+    }
   }
 
   ctx.restore();
@@ -633,6 +762,7 @@ const droneActions = {
     if (cell.state !== State.TILLED) return;
     const ct = (cropTypeArg !== undefined && cropTypeArg >= 0 && cropTypeArg < CROPS.length)
       ? cropTypeArg : CropType.WHEAT;
+    if (!eco.unlockedCrops.has(ct)) return; // supplier not purchased
     if (eco.seeds[ct] <= 0) return; // no seeds
     eco.seeds[ct]--;
     cell.state      = State.PLANTED;
@@ -692,6 +822,7 @@ const droneActions = {
   get_seeds(ct)       { return (ct >= 0 && ct < CROPS.length) ? eco.seeds[ct] : 0; },
   buy_seeds(ct, cnt) {
     if (ct < 0 || ct >= CROPS.length) return;
+    if (!eco.unlockedCrops.has(ct)) return; // supplier not purchased
     const count = Math.trunc(cnt);
     if (!Number.isFinite(count) || count <= 0) return;
     const cost = CROPS[ct].seedCost * count;
@@ -726,10 +857,33 @@ function updateStats() {
   document.getElementById('tank-max-disp').textContent   = '/' + TANK_MAX;
   document.getElementById('energy-val').textContent = eco.energy;
   document.getElementById('energy-max-disp').textContent = '/' + ENERGY_MAX;
-  // Seeds mini-display
+  // Seeds mini-display — locked crops show 🔒, unlocked show count
   document.getElementById('seeds-wheat').textContent  = eco.seeds[0];
   document.getElementById('seeds-potato').textContent = eco.seeds[1];
-  document.getElementById('seeds-pumpkin').textContent = eco.seeds[2];
+  const lockedSeedItems = [
+    ['seeds-pumpkin',  'seed-item-pumpkin',  2],
+    ['seeds-corn',     'seed-item-corn',     3],
+    ['seeds-mushroom', 'seed-item-mushroom', 4],
+    ['seeds-coffee',   'seed-item-coffee',   5],
+  ];
+  for (const [countId, itemId, ct] of lockedSeedItems) {
+    const unlocked = eco.unlockedCrops.has(ct);
+    const countEl = document.getElementById(countId);
+    const itemEl  = document.getElementById(itemId);
+    if (countEl) countEl.textContent = unlocked ? eco.seeds[ct] : '🔒';
+    if (itemEl)  itemEl.classList.toggle('seed-locked', !unlocked);
+  }
+  // Toggle locked class on API panel crop cards
+  const lockedCropCards = [
+    ['crop-card-2', 2],
+    ['crop-card-3', 3],
+    ['crop-card-4', 4],
+    ['crop-card-5', 5],
+  ];
+  for (const [id, ct] of lockedCropCards) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('crop-locked', !eco.unlockedCrops.has(ct));
+  }
 }
 
 const consoleArea = document.getElementById('console-area');
@@ -741,11 +895,6 @@ function consolePrint(msg, cls = 'console-out') {
   consoleArea.scrollTop = consoleArea.scrollHeight;
 }
 
-function setStatus(txt, color = '#38d58c') {
-  const el = document.getElementById('status-stat');
-  el.textContent = txt;
-  el.style.color = color;
-}
 
 let saveIndicatorTimer = null;
 function showSaveIndicator() {
@@ -797,7 +946,6 @@ function setRunUI(running) {
   document.getElementById('run-btn2').disabled  = running;
   document.getElementById('stop-btn').disabled  = !running;
   document.getElementById('stop-btn2').disabled = !running;
-  setStatus(running ? '▶ Running' : '⏹ Stopped', running ? '#f0b84a' : '#38d58c');
 }
 
 
@@ -1144,10 +1292,18 @@ int main() {
         process_cell();
         if (dir == Direction::EAST) {
             if (get_x() < GRID_W - 1) move(Direction::EAST);
-            else { move(Direction::SOUTH); dir = Direction::WEST; }
+            else { 
+              //for movement below
+              //move(Direction::SOUTH); 
+              dir = Direction::WEST;
+            }
         } else {
             if (get_x() > 0) move(Direction::WEST);
-            else { move(Direction::SOUTH); dir = Direction::EAST; }
+            else {
+              //for movement below
+              //move(Direction::SOUTH);
+              dir = Direction::EAST;
+            }
         }
     }
 }`,
@@ -1352,7 +1508,7 @@ require(['vs/editor/editor.main'], function () {
       theme:           appSettings.editorTheme,
       fontSize:        appSettings.editorFontSize,
       lineNumbers:     'on',
-      minimap:         { enabled: true },
+      minimap:         { enabled: false },
       scrollBeyondLastLine: false,
       automaticLayout: true,
       tabSize:         4,
@@ -1721,6 +1877,40 @@ function updateUpgradeUI() {
   }
 }
 
+function buySupplier(cropType) {
+  if (eco.unlockedCrops.has(cropType)) return;
+  const crop = CROPS[cropType];
+  if (!crop || !crop.supplierCost) return;
+  if (eco.gold < crop.supplierCost) return;
+  eco.gold -= crop.supplierCost;
+  eco.unlockedCrops.add(cropType);
+  updateStats();
+  updateExtraButtons();
+  consolePrint(`[SUPPLIER] ${crop.name} farming unlocked!`, 'console-info');
+}
+
+function updateSupplierUI() {
+  for (let ct = 2; ct < CROPS.length; ct++) {
+    const unlocked = eco.unlockedCrops.has(ct);
+    const btn    = document.getElementById(`sup-btn-${ct}`);
+    const costEl = document.getElementById(`sup-cost-${ct}`);
+    const item   = document.getElementById(`sup-${ct}`);
+    if (!btn) continue;
+    if (unlocked) {
+      btn.textContent = '✓ Active';
+      btn.disabled    = true;
+      if (costEl) costEl.textContent = '';
+      if (item)   item.classList.add('sup-unlocked');
+    } else {
+      const cost = CROPS[ct].supplierCost;
+      btn.textContent = 'Unlock';
+      btn.disabled    = eco.gold < cost;
+      if (costEl) costEl.textContent = `${cost} 💰`;
+      if (item)   item.classList.remove('sup-unlocked');
+    }
+  }
+}
+
 function updateExtraButtons() {
   const atBase = game.drone.x === 0 && game.drone.y === 0;
   xBuyEnergy.disabled = atBase || eco.gold < EXTRA_ENERGY_COST;
@@ -1729,6 +1919,7 @@ function updateExtraButtons() {
   const goldEl = document.getElementById('x-gold-val');
   if (goldEl) goldEl.textContent = eco.gold;
   updateUpgradeUI();
+  updateSupplierUI();
 }
 
 function openExtra() {
@@ -1747,7 +1938,18 @@ xBuyWater.addEventListener('click', buyEmergencyWater);
 document.getElementById('upg-tank-btn').addEventListener('click', buyTankUpgrade);
 document.getElementById('upg-energy-btn').addEventListener('click', buyEnergyUpgrade);
 xOverlay.addEventListener('click', e => { if (e.target === xOverlay) closeExtra(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeExtra(); });
+
+// ── Guide modal ───────────────────────────────────────────────
+const guideOverlay = document.getElementById('guide-overlay');
+function openGuide()  { guideOverlay.classList.remove('hidden'); }
+function closeGuide() { guideOverlay.classList.add('hidden'); }
+document.getElementById('guide-btn').addEventListener('click', openGuide);
+document.getElementById('guide-close-btn').addEventListener('click', closeGuide);
+guideOverlay.addEventListener('click', e => { if (e.target === guideOverlay) closeGuide(); });
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeExtra(); closeGuide(); }
+});
 
 // ────────────────────────────────────────────────────────────
 //  API PANEL TOOLTIPS
