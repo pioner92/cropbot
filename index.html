@@ -862,6 +862,32 @@ header {
 .fn-paren { color: var(--tx-3); }
 .fn-param { color: var(--tx-2); font-style: italic; }
 
+/* Tick cost pill */
+.api-cost-badge {
+  margin-left: auto;
+  font-size: calc(9px * var(--ui-scale));
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--bd-2);
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: var(--tx-3);
+}
+
+/* Overload variant row — indented, slightly muted */
+.api-fn-alt {
+  padding-left: 28px;
+  padding-top: 0;
+  line-height: 1.7;
+  opacity: 0.72;
+}
+.api-fn-alt::before {
+  content: '└ ';
+  color: var(--bd-2);
+}
+
 /* Enum blocks */
 .enum-block {
   margin: 4px 12px 8px 14px;
@@ -1709,7 +1735,7 @@ header {
 
     <!-- Movement -->
     <div class="api-section">
-      <div class="api-section-header">Movement · 1 tick</div>
+      <div class="api-section-header">Movement <span class="api-cost-badge">1 tick</span></div>
       <div class="api-fn-row" data-desc="Move one step in the given direction. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">move</span><span class="fn-paren">(</span><span class="t-dir">Direction</span> <span class="fn-param">dir</span><span class="fn-paren">)</span></div>
       <div class="api-fn-row" data-desc="Move one step north. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">move_north</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Move one step south. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">move_south</span><span class="fn-paren">()</span></div>
@@ -1719,50 +1745,52 @@ header {
 
     <!-- Field -->
     <div class="api-section">
-      <div class="api-section-header">Field · 1 tick</div>
-      <div class="api-fn-row" data-desc="Till an empty cell to prepare it for planting. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">till</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Plant a crop. Cell must be tilled and seeds must be available. 1 tick."><span class="t-void">void</span> <span class="fn-name">plant</span><span class="fn-paren">(</span><span class="t-crop">CropType</span> <span class="fn-param">crop</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Harvest a ripe crop (READY state). 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">harvest</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Water the current cell from the tank. 1 tick, 1 energy, uses tank water."><span class="t-void">void</span> <span class="fn-name">water</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Skip the given number of ticks. No energy cost."><span class="t-void">void</span> <span class="fn-name">wait</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">ticks</span><span class="fn-paren">)</span></div>
+      <div class="api-section-header" style="color:var(--gr)">Field <span class="api-cost-badge">1 tick</span></div>
+      <div class="api-fn-row" data-desc="Till an empty cell. EMPTY → TILLED. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">till</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Plant a crop on a tilled cell. Consumes 1 seed. TILLED → PLANTED. 1 tick."><span class="t-void">void</span> <span class="fn-name">plant</span><span class="fn-paren">(</span><span class="t-crop">CropType</span> <span class="fn-param">crop</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Harvest a ripe crop. READY → EMPTY, earn gold. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">harvest</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Water the current cell. Costs 15 tank units, gives cell +50 water. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">water</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Pause execution for the given number of ticks. No energy cost."><span class="t-void">void</span> <span class="fn-name">wait</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">ticks</span><span class="fn-paren">)</span></div>
     </div>
 
-    <!-- Queries -->
+    <!-- Cell State -->
     <div class="api-section">
-      <div class="api-section-header">Query · 0 ticks</div>
-      <div class="api-fn-row" data-desc="State of the current cell: EMPTY/TILLED/PLANTED/GROWING/READY/BASE."><span class="t-state">CellState</span> <span class="fn-name">get_cell_state</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="State of the cell at coordinates (x, y)."><span class="t-state">CellState</span> <span class="fn-name">get_cell_state</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Crop type in the current cell: WHEAT, POTATO, PUMPKIN, CORN, MUSHROOM or COFFEE."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Crop type in the cell at (x, y)."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Water level of the current cell (0–100). Growth pauses when 0."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Water level of the cell at (x, y)."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Water currently in the drone tank. Maximum capacity increases with Tank upgrades. Refilled at base each tick."><span class="t-int">int</span> <span class="fn-name">get_tank</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Current maximum tank capacity (changes after upgrades)."><span class="t-int">int</span> <span class="fn-name">get_max_tank</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Current battery charge. Maximum capacity increases with Energy upgrades. Recharged at base each tick."><span class="t-int">int</span> <span class="fn-name">get_energy</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Current maximum battery capacity (changes after upgrades)."><span class="t-int">int</span> <span class="fn-name">get_max_energy</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Returns 1 if the drone is at base (0,0), otherwise 0."><span class="t-int">int</span> <span class="fn-name">is_at_base</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Current X and Y coordinates of the drone."><span class="t-int">int</span> <span class="fn-name">get_x</span><span class="fn-paren">()</span><span class="t-void"> · </span><span class="fn-name">get_y</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Number of ticks elapsed since the program started."><span class="t-int">int</span> <span class="fn-name">get_ticks</span><span class="fn-paren">()</span></div>
+      <div class="api-section-header" style="color:var(--ac)">Cell <span class="api-cost-badge">0 ticks</span></div>
+      <div class="api-fn-row" data-desc="State of the cell under the drone: EMPTY / TILLED / PLANTED / GROWING / READY / BASE."><span class="t-state">CellState</span> <span class="fn-name">get_cell_state</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row api-fn-alt" data-desc="State of the cell at coordinates (x, y)."><span class="t-state">CellState</span> <span class="fn-name">get_cell_state</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x</span><span class="fn-paren">,</span> <span class="t-int">int</span> <span class="fn-param">y</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Crop type in the cell under the drone: WHEAT / POTATO / PUMPKIN / CORN / MUSHROOM / COFFEE."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row api-fn-alt" data-desc="Crop type in the cell at (x, y)."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x</span><span class="fn-paren">,</span> <span class="t-int">int</span> <span class="fn-param">y</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Water level of the cell under the drone (0–100). Growth pauses at 0. Drains 2/tick while planted."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row api-fn-alt" data-desc="Water level of the cell at (x, y)."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x</span><span class="fn-paren">,</span> <span class="t-int">int</span> <span class="fn-param">y</span><span class="fn-paren">)</span></div>
+    </div>
+
+    <!-- Drone Status -->
+    <div class="api-section">
+      <div class="api-section-header" style="color:var(--bl)">Drone <span class="api-cost-badge">0 ticks</span></div>
+      <div class="api-fn-row" data-desc="Current X coordinate of the drone. 0 = west edge. Grid width = GRID_W."><span class="t-int">int</span> <span class="fn-name">get_x</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Current Y coordinate of the drone. 0 = north edge. Grid height = GRID_H."><span class="t-int">int</span> <span class="fn-name">get_y</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Returns 1 if the drone is at base (0, 0). Base recharges energy (+10/tick) and tank (+8/tick)."><span class="t-int">int</span> <span class="fn-name">is_at_base</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Current battery charge. Each action costs 1 energy. Recharges at base (+10/tick)."><span class="t-int">int</span> <span class="fn-name">get_energy</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row api-fn-alt" data-desc="Maximum battery capacity. Upgradeable in Extra panel. Default: 60."><span class="t-int">int</span> <span class="fn-name">get_max_energy</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Water in the drone tank. Used by water(). Refills at base (+8/tick)."><span class="t-int">int</span> <span class="fn-name">get_tank</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row api-fn-alt" data-desc="Maximum tank capacity. Upgradeable in Extra panel. Default: 50."><span class="t-int">int</span> <span class="fn-name">get_max_tank</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Current score — total number of successful harvests."><span class="t-int">int</span> <span class="fn-name">get_score</span><span class="fn-paren">()</span></div>
     </div>
 
     <!-- Economy -->
     <div class="api-section">
-      <div class="api-section-header" style="color:var(--am)">Economy · 0 ticks</div>
-      <div class="api-fn-row" data-desc="How much gold the player currently has."><span class="t-int">int</span>  <span class="fn-name">get_gold</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Number of seeds of the given crop type in inventory."><span class="t-int">int</span>  <span class="fn-name">get_seeds</span><span class="fn-paren">(</span><span class="t-crop">CropType</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Buy seeds for gold. Cost: Wheat 1💰, Potato 2💰, Pumpkin 5💰."><span class="t-void">void</span> <span class="fn-name">buy_seeds</span><span class="fn-paren">(</span><span class="t-crop">CropType</span><span class="fn-paren">,</span> <span class="t-int">int</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Buy water for the tank (1 pack = 25 units, costs 40💰 each) — penalty rate. Returning to base is always cheaper."><span class="t-void">void</span> <span class="fn-name">buy_water</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">packs</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Print a number to the console. Used for debugging."><span class="t-void">void</span> <span class="fn-name">print</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">val</span><span class="fn-paren">)</span></div>
+      <div class="api-section-header" style="color:var(--am)">Economy <span class="api-cost-badge">0 ticks</span></div>
+      <div class="api-fn-row" data-desc="How much gold the player currently has."><span class="t-int">int</span> <span class="fn-name">get_gold</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Number of seeds of the given crop type currently in inventory."><span class="t-int">int</span> <span class="fn-name">get_seeds</span><span class="fn-paren">(</span><span class="t-crop">CropType</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Buy seeds for gold. Seed costs: Wheat 1💰, Potato 2💰, Pumpkin 5💰, Corn 3💰, Mushroom 4💰, Coffee 20💰."><span class="t-void">void</span> <span class="fn-name">buy_seeds</span><span class="fn-paren">(</span><span class="t-crop">CropType</span><span class="fn-paren">,</span> <span class="t-int">int</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Buy water for the tank. 1 pack = 50 units, costs 10💰. Tip: returning to base is free."><span class="t-void">void</span> <span class="fn-name">buy_water</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">packs</span><span class="fn-paren">)</span></div>
     </div>
 
-    <!-- Constants -->
+    <!-- System -->
     <div class="api-section">
-      <div class="api-section-header" style="color:var(--bl)">Constants</div>
-      <div class="api-grid-info">
-        <b>GRID_W</b> × <b>GRID_H</b> = 10 × 10<br>
-        <span style="color:var(--tx-3)">// 1 seed = 1💰</span>
-      </div>
+      <div class="api-section-header" style="color:var(--tx-3)">System <span class="api-cost-badge">0 ticks</span></div>
+      <div class="api-fn-row" data-desc="Total ticks elapsed since the program started."><span class="t-int">int</span> <span class="fn-name">get_ticks</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Print an integer to the in-game console. Useful for debugging your algorithm."><span class="t-void">void</span> <span class="fn-name">print</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">val</span><span class="fn-paren">)</span></div>
     </div>
 
   </div>
