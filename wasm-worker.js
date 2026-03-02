@@ -24,7 +24,7 @@ const ACT = {
   GET_WATER_LEVEL:15, GET_WATER_LEVEL_AT:16, GET_TANK:17,
   GET_GOLD:18, GET_SEEDS:19, BUY_SEEDS:20,
   GET_X:21, GET_Y:22, GET_TICKS:23, GET_SCORE:24,
-  PRINT_INT:25, BUY_WATER:26, GET_ENERGY:27, GET_MAX_ENERGY:28, IS_AT_BASE:29,
+  PRINT_INT:25, BUY_WATER:26, GET_ENERGY:27, GET_MAX_ENERGY:28, IS_AT_BASE:29, GET_MAX_TANK:30,
 };
 
 let ctrl = null; // Int32Array view of SAB
@@ -65,6 +65,7 @@ function makeDroneEnv() {
     get_water_level:    ()    => callMain(ACT.GET_WATER_LEVEL),
     get_water_level_at: (x,y) => callMain(ACT.GET_WATER_LEVEL_AT, x, y),
     get_tank:           ()    => callMain(ACT.GET_TANK),
+    get_max_tank:       ()    => callMain(ACT.GET_MAX_TANK),
     get_energy:         ()    => callMain(ACT.GET_ENERGY),
     get_max_energy:     ()    => callMain(ACT.GET_MAX_ENERGY),
     is_at_base:         ()    => callMain(ACT.IS_AT_BASE),

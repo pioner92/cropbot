@@ -58,6 +58,7 @@ int get_crop_type_at(int x, int y);
 int get_water_level();
 int get_water_level_at(int x, int y);
 int get_tank();
+int get_max_tank();
 int get_energy();
 int get_max_energy();
 int is_at_base();

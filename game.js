@@ -119,26 +119,24 @@ function growTick() {
       if (cell.state === State.BASE) continue; // base tile is not farmland
       const crop = cell.cropType >= 0 ? CROPS[cell.cropType] : null;
 
-      // Drain water on growing cells
-      if (cell.state === State.PLANTED || cell.state === State.GROWING) {
+      // Growth and drain: check water BEFORE draining so a plant can grow on its last tick of water
+      if ((cell.state === State.PLANTED || cell.state === State.GROWING) && crop) {
+        if (cell.waterLevel > 0) {
+          if (cell.state === State.PLANTED) {
+            cell.growTimer++;
+            if (cell.growTimer >= crop.time1) {
+              cell.state = State.GROWING;
+              cell.growTimer = 0;
+            }
+          } else {
+            cell.growTimer++;
+            if (cell.growTimer >= crop.time2) {
+              cell.state = State.READY;
+              cell.growTimer = 0;
+            }
+          }
+        }
         cell.waterLevel = Math.max(0, cell.waterLevel - WATER_DRAIN);
-      }
-
-      // Growth only happens when there's water
-      if (cell.waterLevel <= 0) continue;
-
-      if (cell.state === State.PLANTED && crop) {
-        cell.growTimer++;
-        if (cell.growTimer >= crop.time1) {
-          cell.state = State.GROWING;
-          cell.growTimer = 0;
-        }
-      } else if (cell.state === State.GROWING && crop) {
-        cell.growTimer++;
-        if (cell.growTimer >= crop.time2) {
-          cell.state = State.READY;
-          cell.growTimer = 0;
-        }
       }
     }
   }
@@ -666,6 +664,7 @@ const droneActions = {
     return game.grid[game.drone.y][game.drone.x].waterLevel;
   },
   get_tank()          { return eco.tank; },
+  get_max_tank()      { return TANK_MAX; },
   get_energy()        { return eco.energy; },
   get_max_energy()    { return ENERGY_MAX; },
   is_at_base()        { return (game.drone.x === 0 && game.drone.y === 0) ? 1 : 0; },
@@ -842,14 +841,14 @@ const ACT = {
   GET_WATER_LEVEL:15, GET_WATER_LEVEL_AT:16, GET_TANK:17,
   GET_GOLD:18, GET_SEEDS:19, BUY_SEEDS:20,
   GET_X:21, GET_Y:22, GET_TICKS:23, GET_SCORE:24,
-  PRINT_INT:25, BUY_WATER:26, GET_ENERGY:27, GET_MAX_ENERGY:28, IS_AT_BASE:29,
+  PRINT_INT:25, BUY_WATER:26, GET_ENERGY:27, GET_MAX_ENERGY:28, IS_AT_BASE:29, GET_MAX_TANK:30,
 };
 
 // Actions that do NOT consume a tick (queries)
 const QUERY_ACTIONS = new Set([
   ACT.GET_STATE, ACT.GET_STATE_AT, ACT.GET_CROP_TYPE, ACT.GET_CROP_TYPE_AT,
   ACT.GET_WATER_LEVEL, ACT.GET_WATER_LEVEL_AT, ACT.GET_TANK,
-  ACT.GET_ENERGY, ACT.GET_MAX_ENERGY, ACT.IS_AT_BASE,
+  ACT.GET_ENERGY, ACT.GET_MAX_ENERGY, ACT.GET_MAX_TANK, ACT.IS_AT_BASE,
   ACT.GET_GOLD, ACT.GET_SEEDS, ACT.GET_X, ACT.GET_Y,
   ACT.GET_TICKS, ACT.GET_SCORE, ACT.PRINT_INT,
 ]);
@@ -889,6 +888,7 @@ function execWasmAction() {
     case ACT.GET_WATER_LEVEL:   result = droneActions.get_water_level();              break;
     case ACT.GET_WATER_LEVEL_AT:result = droneActions.get_water_level_at(arg0, arg1); break;
     case ACT.GET_TANK:          result = droneActions.get_tank();                     break;
+    case ACT.GET_MAX_TANK:      result = droneActions.get_max_tank();                 break;
     case ACT.GET_ENERGY:        result = droneActions.get_energy();                   break;
     case ACT.GET_MAX_ENERGY:    result = droneActions.get_max_energy();               break;
     case ACT.IS_AT_BASE:        result = droneActions.is_at_base();                   break;
