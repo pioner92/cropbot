@@ -2,6 +2,8 @@
 
 > Program a farming drone in real C++. Watch it work.
 
+![Cropbot preview](assets/preview.png)
+
 A browser-based farming game where you write C++ code to automate a drone.
 Your code is compiled to WebAssembly via Emscripten and runs live in the browser —
 no plugins, no downloads, just a text editor and a field to farm.
