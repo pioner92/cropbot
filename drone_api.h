@@ -1,10 +1,10 @@
 // ================================================================
-//  drone_api.h — API дрона для C++ / WebAssembly
-//  Этот файл автоматически добавляется к вашему коду перед компиляцией.
-//  Не нужно писать #include, он уже подключён.
+//  drone_api.h — Drone API for C++ / WebAssembly
+//  This file is automatically prepended to your code before compilation.
+//  You do not need to write #include; it is already included.
 // ================================================================
 
-// ── Направления ───────────────────────────────────────────────
+// ── Directions ────────────────────────────────────────────────
 enum class Direction {
     NORTH = 0,
     EAST  = 1,
@@ -12,7 +12,7 @@ enum class Direction {
     WEST  = 3
 };
 
-// ── Состояния клетки ─────────────────────────────────────────
+// ── Cell states ───────────────────────────────────────────────
 enum class CellState {
     EMPTY   = 0,
     TILLED  = 1,
@@ -22,18 +22,18 @@ enum class CellState {
     BASE    = 5   // drone landing pad — farming actions are no-ops here
 };
 
-// ── Культуры ─────────────────────────────────────────────────
+// ── Crops ─────────────────────────────────────────────────────
 enum class CropType {
     WHEAT   = 0,
     POTATO  = 1,
     PUMPKIN = 2
 };
 
-// ── Размер поля (подставляется сервером) ─────────────────────
+// ── Field size (injected by server) ───────────────────────────
 #define GRID_W  __GRID_W__
 #define GRID_H  __GRID_H__
 
-// ── Функции дрона (C ABI — параметры всегда int) ─────────────
+// ── Drone functions (C ABI — parameters are always int) ───────
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -78,29 +78,29 @@ void print_int(int val);
 }
 #endif
 
-// ── C++ обёртки с enum class ──────────────────────────────────
+// ── C++ wrappers with enum class ───────────────────────────────
 #ifdef __cplusplus
 
-// Перегрузки: принимают enum class, передают int в C-функции
+// Overloads: accept enum class, pass int to C functions
 inline void move(Direction dir)                  { move(static_cast<int>(dir)); }
 inline void plant(CropType crop)                 { plant(static_cast<int>(crop)); }
 inline int  get_seeds(CropType crop)             { return get_seeds(static_cast<int>(crop)); }
 inline void buy_seeds(CropType crop, int count)  { buy_seeds(static_cast<int>(crop), count); }
 
-// get_state() возвращает CellState — нельзя сравнивать int с enum class напрямую
+// get_state() returns CellState — avoid comparing int with enum class directly
 inline CellState get_cell_state()              { return static_cast<CellState>(get_state()); }
 inline CellState get_cell_state(int x, int y)  { return static_cast<CellState>(get_state_at(x, y)); }
 
-// get_crop_type() возвращает CropType
+// get_crop_type() returns CropType
 inline CropType get_crop()             { return static_cast<CropType>(get_crop_type()); }
 inline CropType get_crop(int x, int y) { return static_cast<CropType>(get_crop_type_at(x, y)); }
 
-// Перегрузки координат
+// Coordinate overloads
 inline int get_state(int x, int y)        { return get_state_at(x, y); }
 inline int get_crop_type(int x, int y)    { return get_crop_type_at(x, y); }
 inline int get_water_level(int x, int y)  { return get_water_level_at(x, y); }
 
-// Псевдонимы
+// Aliases
 inline void wait(int ticks)   { drone_wait(ticks); }
 inline void print(int val)    { print_int(val); }
 

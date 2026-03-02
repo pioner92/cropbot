@@ -2,21 +2,21 @@
 
 // ================================================================
 //  wasm-worker.js  —  Web Worker
-//  Запускает скомпилированный WASM модуль.
-//  Общается с главным потоком через SharedArrayBuffer + Atomics.
+//  Runs the compiled WASM module.
+//  Communicates with the main thread via SharedArrayBuffer + Atomics.
 // ================================================================
 
-// ── SAB layout (Int32Array, 8 ячеек) ────────────────────────────
-//  [0] ACTION   — тип действия (worker пишет, main читает, main сбрасывает в 0)
-//  [1] ARG0     — первый аргумент
-//  [2] ARG1     — второй аргумент
-//  [3] RESULT   — результат (main пишет, worker читает)
-//  [4] RESPONSE — сигнал завершения (main ставит 1, worker ждёт здесь)
-//  [5] READY    — worker ставит 1 когда готов
+// ── SAB layout (Int32Array, 8 cells) ────────────────────────────
+//  [0] ACTION   — action type (worker writes, main reads, main resets to 0)
+//  [1] ARG0     — first argument
+//  [2] ARG1     — second argument
+//  [3] RESULT   — result value (main writes, worker reads)
+//  [4] RESPONSE — completion signal (main sets to 1, worker waits here)
+//  [5] READY    — worker sets to 1 when ready
 
 const IDX = { ACTION:0, ARG0:1, ARG1:2, RESULT:3, RESPONSE:4, READY:5 };
 
-// ── Коды действий (должны совпадать с game.js) ──────────────────
+// ── Action codes (must match game.js) ───────────────────────────
 const ACT = {
   MOVE:1, MOVE_NORTH:2, MOVE_SOUTH:3, MOVE_EAST:4, MOVE_WEST:5,
   TILL:6, PLANT:7, HARVEST:8, WATER:9, DRONE_WAIT:10,
@@ -29,23 +29,23 @@ const ACT = {
 
 let ctrl = null; // Int32Array view of SAB
 
-// Синхронный вызов в главный поток (блокирует Worker до ответа)
+// Synchronous call to main thread (blocks Worker until response)
 function callMain(action, arg0 = 0, arg1 = 0) {
   Atomics.store(ctrl, IDX.RESPONSE, 0);
   Atomics.store(ctrl, IDX.ARG0,     arg0);
   Atomics.store(ctrl, IDX.ARG1,     arg1);
   Atomics.store(ctrl, IDX.ACTION,   action);
 
-  // Будим главный поток
+  // Wake the main thread
   Atomics.notify(ctrl, IDX.ACTION, 1);
 
-  // Блокируемся до получения ответа (допустимо только в Worker)
+  // Block until response (allowed only in Worker)
   Atomics.wait(ctrl, IDX.RESPONSE, 0);
 
   return Atomics.load(ctrl, IDX.RESULT);
 }
 
-// ── Импорты для WASM модуля ──────────────────────────────────────
+// ── Imports for WASM module ──────────────────────────────────────
 function makeDroneEnv() {
   return {
     move:               (d)   => { callMain(ACT.MOVE, d); },
@@ -80,7 +80,7 @@ function makeDroneEnv() {
   };
 }
 
-// Заглушки для WASI и прочих системных вызовов
+// Stubs for WASI and other system calls
 function makeWasiStubs() {
   const stub0 = () => 0;
   return {
@@ -95,7 +95,7 @@ function makeWasiStubs() {
   };
 }
 
-// Динамически строим объект imports под то, что нужно конкретному модулю
+// Build imports object dynamically for the specific module needs
 function buildImports(wasmModule) {
   const droneEnv  = makeDroneEnv();
   const wasiStubs = makeWasiStubs();
@@ -123,7 +123,7 @@ function buildImports(wasmModule) {
   return result;
 }
 
-// ── Обработчик сообщений от главного потока ─────────────────────
+// ── Message handler from main thread ────────────────────────────
 self.onmessage = async (e) => {
   if (e.data.type !== 'start') return;
 
@@ -136,16 +136,16 @@ self.onmessage = async (e) => {
     const imports    = buildImports(wasmModule);
     const instance = await WebAssembly.instantiate(wasmModule, imports);
 
-    // Сигнализируем: Worker готов
+    // Signal that the worker is ready
     Atomics.store(ctrl, IDX.READY, 1);
     Atomics.notify(ctrl, IDX.READY, 1);
 
-    // Запускаем main() — блокируется навсегда через while(1)
+    // Run main() — typically blocks forever via while(1)
     const fn = instance.exports._main || instance.exports.main;
-    if (!fn) throw new Error('Функция main() не найдена в скомпилированном коде');
+    if (!fn) throw new Error('main() function not found in compiled code');
     fn();
 
-    // Если main() вернул управление — сообщаем
+    // If main() returns control — notify main thread
     self.postMessage({ type: 'done' });
 
   } catch (err) {

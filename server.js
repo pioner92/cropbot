@@ -24,20 +24,20 @@ app.use(express.static(path.join(__dirname)));
 app.post('/compile', async (req, res) => {
   const { code, gridW = 10, gridH = 10 } = req.body;
   if (!code || typeof code !== 'string') {
-    return res.status(400).json({ error: 'Нет кода для компиляции' });
+    return res.status(400).json({ error: 'No code provided for compilation' });
   }
 
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drone-'));
 
   try {
-    // Читаем шаблон заголовка и подставляем текущий размер поля
+    // Read header template and inject current field size
     let header = await fsp.readFile(path.join(__dirname, 'drone_api.h'), 'utf8');
     header = header
       .replace('__GRID_W__', String(gridW))
       .replace('__GRID_H__', String(gridH));
 
-    // Итоговый исходник = заголовок + код пользователя
-    // Автоисправление: void main() → int main() (JS-режим разрешал void)
+    // Final source = header + user code
+    // Auto-fix: void main() → int main() (JS mode allowed void)
     const fixedCode = code.replace(/\bvoid\s+(main\s*\()/g, 'int $1');
     const fullCode = header + '\n' + fixedCode;
     const srcPath  = path.join(tmpDir, 'main.cpp');
@@ -61,7 +61,7 @@ app.post('/compile', async (req, res) => {
         '-fno-exceptions',
       ], { timeout: 30_000 }, (err, stdout, stderr) => {
         if (err) {
-          // Убираем путь tmp из вывода ошибки
+          // Remove tmp path from compiler error output
           const raw = stderr || stdout || err.message || '';
           const clean = raw.replace(new RegExp(tmpDir.replace(/[/\\]/g, '[/\\\\]'), 'g'), '');
           reject(new Error(clean.trim()));

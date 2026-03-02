@@ -21,10 +21,10 @@ const CROPS = [
   { name: 'Wheat',    time1: 8,  time2: 12, value: 2,  seedCost: 1,
     colors: { planted: '#70cc30', growing: '#c8d830', ready: '#ffd000' } },
   // POTATO — medium
-  { name: 'Potato',   time1: 14, time2: 20, value: 5,  seedCost: 2,
+  { name: 'Potato',   time1: 14, time2: 20, value: 6,  seedCost: 2,
     colors: { planted: '#50bc40', growing: '#38a828', ready: '#d8a840' } },
   // PUMPKIN — slow, expensive
-  { name: 'Pumpkin',  time1: 25, time2: 40, value: 12, seedCost: 4,
+  { name: 'Pumpkin',  time1: 25, time2: 40, value: 10, seedCost: 5,
     colors: { planted: '#40b030', growing: '#e86820', ready: '#ff5500' } },
 ];
 
@@ -34,19 +34,36 @@ const BASE_COLORS = { EMPTY: '#2d1808', TILLED: '#3d2210' };
 // Water config
 const WATER_MAX      = 100; // max cell water level
 const WATER_START    = 50;  // water level when planted
-const WATER_DRAIN    = 1;   // per tick while planted/growing
-const TANK_MAX       = 50;  // drone tank capacity
+const WATER_DRAIN    = 2;   // per tick while planted/growing
+const TANK_MAX_BASE  = 50;  // base drone tank capacity
+let   TANK_MAX       = 50;  // effective capacity (raised by upgrades)
 const WATER_COST     = 15;  // tank units per water() call
 const WATER_GIVE     = 50;  // cell water units added by water()
-const WATER_BUY_PACK = 25;  // tank units per buy_water(1)
-const WATER_BUY_COST = 5;   // gold per buy_water(1)
+const WATER_BUY_PACK = 50;  // tank units per buy_water(1)
+const WATER_BUY_COST = 10;  // gold per buy_water(1) — slight profit if used on pumpkins (~1.28x ROI)
 
 // Energy config
-const ENERGY_MAX          = 120; // drone battery capacity
+const ENERGY_MAX_BASE     = 120; // base drone battery capacity
+let   ENERGY_MAX          = 120; // effective capacity (raised by upgrades)
 const ENERGY_START        = 120; // energy on reset
 const ENERGY_ACTION_COST  = 1;   // energy spent per tick-action (move/till/plant/water/harvest)
 const ENERGY_CHARGE_RATE  = 10;  // energy recharged per tick when at base
 const WATER_REFILL_RATE   = 8;   // tank units refilled per tick when at base
+
+// Upgrade config
+const UPG_MAX             = 10;   // max upgrade level for each stat
+const UPG_TANK_STEP       = 10;   // +10/level (+20% of base 50) → max 150 (3× base)
+const UPG_ENERGY_STEP     = 24;   // +24/level (+20% of base 120) → max 360 (3× base)
+const UPG_TANK_BASE_COST  = 60;   // cheaper start — tank only matters for watering
+const UPG_ENERGY_BASE_COST= 100;  // pricier — battery affects every action (×1.65 per level)
+const UPG_COST_MULT       = 1.65; // cost multiplier per upgrade level
+
+let upgTank   = 0; // current tank upgrade level (0–10)
+let upgEnergy = 0; // current energy upgrade level (0–10)
+
+function upgCost(baseCost, level) {
+  return Math.floor(baseCost * Math.pow(UPG_COST_MULT, level));
+}
 
 // ────────────────────────────────────────────────────────────
 // GAME STATE
@@ -81,6 +98,10 @@ function initGrid() {
   game.drone = { x: 0, y: 0 };
   game.score = 0;
   game.ticks = 0;
+  upgTank   = 0;
+  upgEnergy = 0;
+  TANK_MAX   = TANK_MAX_BASE;
+  ENERGY_MAX = ENERGY_MAX_BASE;
   eco.gold  = 50;
   eco.seeds = [10, 5, 2];
   eco.tank   = TANK_MAX;
@@ -652,14 +673,17 @@ const droneActions = {
   get_seeds(ct)       { return (ct >= 0 && ct < CROPS.length) ? eco.seeds[ct] : 0; },
   buy_seeds(ct, cnt) {
     if (ct < 0 || ct >= CROPS.length) return;
-    const cost = CROPS[ct].seedCost * cnt;
+    const count = Math.trunc(cnt);
+    if (!Number.isFinite(count) || count <= 0) return;
+    const cost = CROPS[ct].seedCost * count;
     if (eco.gold < cost) return;
     eco.gold -= cost;
-    eco.seeds[ct] += cnt;
+    eco.seeds[ct] += count;
     updateStats();
   },
   buy_water(cnt) {
-    const packs = Math.max(1, cnt | 0);
+    const packs = Math.trunc(cnt);
+    if (!Number.isFinite(packs) || packs <= 0) return;
     const cost = WATER_BUY_COST * packs;
     if (eco.gold < cost) return;
     eco.gold -= cost;
@@ -676,11 +700,13 @@ const droneActions = {
 // UI HELPERS
 // ────────────────────────────────────────────────────────────
 function updateStats() {
-  document.getElementById('score-val').textContent = game.score;
-  document.getElementById('tick-val').textContent  = game.ticks;
-  document.getElementById('gold-val').textContent  = eco.gold;
-  document.getElementById('tank-val').textContent  = eco.tank;
+  document.getElementById('score-val').textContent  = game.score;
+  document.getElementById('tick-val').textContent   = game.ticks;
+  document.getElementById('gold-val').textContent   = eco.gold;
+  document.getElementById('tank-val').textContent   = eco.tank;
+  document.getElementById('tank-max-disp').textContent   = '/' + TANK_MAX;
   document.getElementById('energy-val').textContent = eco.energy;
+  document.getElementById('energy-max-disp').textContent = '/' + ENERGY_MAX;
   // Seeds mini-display
   document.getElementById('seeds-wheat').textContent  = eco.seeds[0];
   document.getElementById('seeds-potato').textContent = eco.seeds[1];
@@ -869,7 +895,7 @@ function execWasmAction() {
     case ACT.GET_GOLD:          result = droneActions.get_gold();                     break;
     case ACT.GET_SEEDS:         result = droneActions.get_seeds(arg0);                break;
     case ACT.BUY_SEEDS:         droneActions.buy_seeds(arg0, arg1);                   break;
-    case ACT.BUY_WATER:         droneActions.buy_water(arg0 || 1);                    break;
+    case ACT.BUY_WATER:         droneActions.buy_water(arg0);                         break;
     case ACT.GET_X:             result = droneActions.get_x();                        break;
     case ACT.GET_Y:             result = droneActions.get_y();                        break;
     case ACT.GET_TICKS:         result = droneActions.get_ticks();                    break;
@@ -1561,12 +1587,11 @@ sOverlay.addEventListener('click', e => { if (e.target === sOverlay) closeSettin
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
 
 // ────────────────────────────────────────────────────────────
-//  EXTRA MODAL (Emergency Supplies)
+//  EXTRA MODAL (Emergency Supplies + Upgrades)
 // ────────────────────────────────────────────────────────────
 const EXTRA_ENERGY_AMOUNT = 40;
-const EXTRA_ENERGY_COST   = 50;
-const EXTRA_WATER_AMOUNT  = 30;
-const EXTRA_WATER_COST    = 30;
+const EXTRA_ENERGY_COST   = 80;  // penalty price — return to base is always cheaper
+const EXTRA_WATER_COST    = WATER_BUY_COST; // same as buy_water() from code — slight profit on pumpkins
 
 const xOverlay   = document.getElementById('extra-overlay');
 const xBuyEnergy = document.getElementById('x-buy-energy');
@@ -1584,18 +1609,97 @@ function buyEmergencyEnergy() {
 
 function buyEmergencyWater() {
   if (eco.gold < EXTRA_WATER_COST) return;
-  eco.gold -= EXTRA_WATER_COST;
-  eco.tank  = Math.min(TANK_MAX, eco.tank + EXTRA_WATER_AMOUNT);
-  updateStats();
-  consolePrint('[SERVICE] Emergency water delivered', 'console-info');
+  droneActions.buy_water(1);
+  consolePrint('[SERVICE] Emergency water purchased', 'console-info');
   updateExtraButtons();
+}
+
+function buyTankUpgrade() {
+  if (upgTank >= UPG_MAX) return;
+  const cost = upgCost(UPG_TANK_BASE_COST, upgTank);
+  if (eco.gold < cost) return;
+  eco.gold -= cost;
+  upgTank++;
+  TANK_MAX = TANK_MAX_BASE + upgTank * UPG_TANK_STEP;
+  updateStats();
+  updateExtraButtons();
+  consolePrint(`[UPGRADE] Tank capacity → ${TANK_MAX} (Lv ${upgTank})`, 'console-info');
+}
+
+function buyEnergyUpgrade() {
+  if (upgEnergy >= UPG_MAX) return;
+  const cost = upgCost(UPG_ENERGY_BASE_COST, upgEnergy);
+  if (eco.gold < cost) return;
+  eco.gold -= cost;
+  upgEnergy++;
+  ENERGY_MAX = ENERGY_MAX_BASE + upgEnergy * UPG_ENERGY_STEP;
+  updateStats();
+  updateExtraButtons();
+  consolePrint(`[UPGRADE] Battery capacity → ${ENERGY_MAX} (Lv ${upgEnergy})`, 'console-info');
+}
+
+function updateUpgradeUI() {
+  // ── Tank upgrade ──────────────────────────────────────────
+  const tankCur  = TANK_MAX_BASE + upgTank * UPG_TANK_STEP;
+  const tankNext = tankCur + UPG_TANK_STEP;
+  const tankCost = upgCost(UPG_TANK_BASE_COST, upgTank);
+  const maxTank  = upgTank >= UPG_MAX;
+
+  const tankBar = document.getElementById('upg-tank-bar');
+  if (tankBar) tankBar.style.width = (upgTank / UPG_MAX * 100) + '%';
+
+  const tankLvlEl = document.getElementById('upg-tank-lvl');
+  if (tankLvlEl) tankLvlEl.textContent = `Lv ${upgTank} / ${UPG_MAX}`;
+
+  const tankStatEl = document.getElementById('upg-tank-stat');
+  if (tankStatEl) tankStatEl.innerHTML = maxTank
+    ? `${tankCur} <span class="upg-max-badge">MAX</span>`
+    : `${tankCur} <span class="upg-arrow">→</span> <strong>${tankNext}</strong>`;
+
+  const tankCostEl = document.getElementById('upg-tank-cost');
+  if (tankCostEl) tankCostEl.textContent = maxTank ? '' : `${tankCost} 💰`;
+
+  const tankBtn = document.getElementById('upg-tank-btn');
+  if (tankBtn) {
+    tankBtn.disabled    = maxTank || eco.gold < tankCost;
+    tankBtn.textContent = maxTank ? 'MAX' : 'Upgrade';
+  }
+
+  // ── Energy upgrade ────────────────────────────────────────
+  const energyCur  = ENERGY_MAX_BASE + upgEnergy * UPG_ENERGY_STEP;
+  const energyNext = energyCur + UPG_ENERGY_STEP;
+  const energyCost = upgCost(UPG_ENERGY_BASE_COST, upgEnergy);
+  const maxEnergy  = upgEnergy >= UPG_MAX;
+
+  const energyBar = document.getElementById('upg-energy-bar');
+  if (energyBar) energyBar.style.width = (upgEnergy / UPG_MAX * 100) + '%';
+
+  const energyLvlEl = document.getElementById('upg-energy-lvl');
+  if (energyLvlEl) energyLvlEl.textContent = `Lv ${upgEnergy} / ${UPG_MAX}`;
+
+  const energyStatEl = document.getElementById('upg-energy-stat');
+  if (energyStatEl) energyStatEl.innerHTML = maxEnergy
+    ? `${energyCur} <span class="upg-max-badge">MAX</span>`
+    : `${energyCur} <span class="upg-arrow">→</span> <strong>${energyNext}</strong>`;
+
+  const energyCostEl = document.getElementById('upg-energy-cost');
+  if (energyCostEl) energyCostEl.textContent = maxEnergy ? '' : `${energyCost} 💰`;
+
+  const energyBtn = document.getElementById('upg-energy-btn');
+  if (energyBtn) {
+    energyBtn.disabled    = maxEnergy || eco.gold < energyCost;
+    energyBtn.textContent = maxEnergy ? 'MAX' : 'Upgrade';
+  }
 }
 
 function updateExtraButtons() {
   const atBase = game.drone.x === 0 && game.drone.y === 0;
   xBuyEnergy.disabled = atBase || eco.gold < EXTRA_ENERGY_COST;
-  xBuyWater.disabled  = atBase || eco.gold < EXTRA_WATER_COST;
+  xBuyWater.disabled  = eco.gold < EXTRA_WATER_COST;
   xBaseHint.classList.toggle('hidden', !atBase);
+  const goldEl = document.getElementById('x-gold-val');
+  if (goldEl) goldEl.textContent = eco.gold;
+  updateUpgradeUI();
 }
 
 function openExtra() {
@@ -1611,6 +1715,8 @@ document.getElementById('extra-btn').addEventListener('click', openExtra);
 document.getElementById('x-close-btn').addEventListener('click', closeExtra);
 xBuyEnergy.addEventListener('click', buyEmergencyEnergy);
 xBuyWater.addEventListener('click', buyEmergencyWater);
+document.getElementById('upg-tank-btn').addEventListener('click', buyTankUpgrade);
+document.getElementById('upg-energy-btn').addEventListener('click', buyEnergyUpgrade);
 xOverlay.addEventListener('click', e => { if (e.target === xOverlay) closeExtra(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeExtra(); });
 

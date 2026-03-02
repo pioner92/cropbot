@@ -187,10 +187,10 @@ header {
   color: var(--ac);
 }
 #extra-btn {
-  background: none;
-  border: 1px solid var(--bd-2);
+  background: var(--re-dim);
+  border: 1px solid rgba(240, 96, 96, 0.2);
   border-radius: 6px;
-  color: var(--tx-3);
+  color: var(--re);
   font-size: calc(12px * var(--ui-scale));
   font-weight: 600;
   cursor: pointer;
@@ -205,9 +205,9 @@ header {
   letter-spacing: 0.03em;
 }
 #extra-btn:hover {
-  background: var(--bg-3);
-  border-color: var(--am);
-  color: var(--am);
+  background: var(--re);
+  border-color: transparent;
+  color: #fff;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -968,6 +968,9 @@ header {
   color: var(--am);
   font-weight: 600;
 }
+.x-cost-penalty {
+  color: #f87171;
+}
 .x-buy-btn {
   padding: 8px 14px;
   font-size: calc(12px * var(--ui-scale));
@@ -989,6 +992,138 @@ header {
   border-radius: 6px;
 }
 .x-base-hint.hidden { display: none; }
+
+/* ── Upgrade cards ───────────────────────────────────────────── */
+.x-modal-wide { width: 500px; }
+
+.x-gold-badge {
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--am);
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--am-dim);
+  border: 1px solid rgba(240,184,74,0.2);
+  border-radius: 6px;
+  padding: 3px 10px;
+  margin-left: auto;
+}
+
+.upg-card {
+  background: var(--bg-3);
+  border: 1px solid var(--bd-2);
+  border-radius: 10px;
+  padding: 12px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upg-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upg-icon {
+  font-size: calc(18px * var(--ui-scale));
+  flex-shrink: 0;
+}
+
+.upg-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.upg-name {
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--tx-1);
+  white-space: nowrap;
+}
+
+.upg-lvl-text {
+  font-size: calc(10px * var(--ui-scale));
+  color: var(--tx-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.upg-stat-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 110px;
+}
+
+.upg-stat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--tx-1);
+  font-weight: 600;
+}
+
+.upg-arrow {
+  color: var(--tx-3);
+  font-weight: 400;
+}
+
+.upg-cost {
+  font-size: calc(11px * var(--ui-scale));
+  color: var(--am);
+  font-weight: 700;
+}
+
+.upg-btn {
+  padding: 7px 14px;
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--ac-dim);
+  color: var(--ac);
+  border-color: rgba(56,213,140,0.25);
+  flex-shrink: 0;
+}
+.upg-btn:hover:not(:disabled) {
+  background: var(--ac);
+  color: #090e18;
+  border-color: transparent;
+}
+.upg-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.upg-bar-track {
+  height: 4px;
+  background: var(--bg-4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.upg-bar-fill {
+  height: 100%;
+  background: var(--bl);
+  border-radius: 2px;
+  transition: width 0.35s ease;
+}
+
+.upg-bar-energy { background: var(--am); }
+
+.upg-max-badge {
+  font-size: calc(10px * var(--ui-scale));
+  background: rgba(56,213,140,0.15);
+  color: var(--ac);
+  border: 1px solid rgba(56,213,140,0.3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
 
 /* ── API Tooltip ─────────────────────────────────────────────── */
 #api-tooltip {
@@ -1028,8 +1163,8 @@ header {
   <div class="header-stats">
     <div class="stat score">🏆 <span>Score</span> <b id="score-val">0</b></div>
     <div class="stat gold">💰 <b id="gold-val">50</b></div>
-    <div class="stat water">💧 Tank <b id="tank-val">50</b><span style="color:var(--tx-3)">/50</span></div>
-    <div class="stat energy">🔋 Energy <b id="energy-val">120</b><span style="color:var(--tx-3)">/120</span></div>
+    <div class="stat water">💧 Tank <b id="tank-val">50</b><span style="color:var(--tx-3)" id="tank-max-disp">/50</span></div>
+    <div class="stat energy">🔋 Energy <b id="energy-val">120</b><span style="color:var(--tx-3)" id="energy-max-disp">/120</span></div>
     <div class="stat">Tick <b id="tick-val">0</b></div>
     <div class="stat" id="status-stat">⏹ Stopped</div>
   </div>
@@ -1205,9 +1340,9 @@ header {
       <div class="api-fn-row" data-desc="Crop type in the cell at (x, y)."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
       <div class="api-fn-row" data-desc="Water level of the current cell (0–100). Growth pauses when 0."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Water level of the cell at (x, y)."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Water in the drone tank (max 50). Refills automatically at base."><span class="t-int">int</span> <span class="fn-name">get_tank</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Current battery charge (max 120). Recharges automatically at base."><span class="t-int">int</span> <span class="fn-name">get_energy</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Maximum battery capacity of the drone (constant value)."><span class="t-int">int</span> <span class="fn-name">get_max_energy</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Water currently in the drone tank. Maximum capacity increases with Tank upgrades. Refilled at base each tick."><span class="t-int">int</span> <span class="fn-name">get_tank</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Current battery charge. Maximum capacity increases with Energy upgrades. Recharged at base each tick."><span class="t-int">int</span> <span class="fn-name">get_energy</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Current maximum battery capacity (changes after upgrades)."><span class="t-int">int</span> <span class="fn-name">get_max_energy</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Returns 1 if the drone is at base (0,0), otherwise 0."><span class="t-int">int</span> <span class="fn-name">is_at_base</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Current X and Y coordinates of the drone."><span class="t-int">int</span> <span class="fn-name">get_x</span><span class="fn-paren">()</span><span class="t-void"> · </span><span class="fn-name">get_y</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Number of ticks elapsed since the program started."><span class="t-int">int</span> <span class="fn-name">get_ticks</span><span class="fn-paren">()</span></div>
@@ -1219,8 +1354,8 @@ header {
       <div class="api-section-header" style="color:var(--am)">Economy · 0 ticks</div>
       <div class="api-fn-row" data-desc="How much gold the player currently has."><span class="t-int">int</span>  <span class="fn-name">get_gold</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Number of seeds of the given crop type in inventory."><span class="t-int">int</span>  <span class="fn-name">get_seeds</span><span class="fn-paren">(</span><span class="t-crop">CropType</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Buy seeds for gold. Cost: Wheat 1💰, Potato 2💰, Pumpkin 4💰."><span class="t-void">void</span> <span class="fn-name">buy_seeds</span><span class="fn-paren">(</span><span class="t-crop">CropType</span><span class="fn-paren">,</span> <span class="t-int">int</span><span class="fn-paren">)</span></div>
-      <div class="api-fn-row" data-desc="Buy water for the tank (1 pack = 25 units, costs 5💰 each)."><span class="t-void">void</span> <span class="fn-name">buy_water</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">packs</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Buy seeds for gold. Cost: Wheat 1💰, Potato 2💰, Pumpkin 5💰."><span class="t-void">void</span> <span class="fn-name">buy_seeds</span><span class="fn-paren">(</span><span class="t-crop">CropType</span><span class="fn-paren">,</span> <span class="t-int">int</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Buy water for the tank (1 pack = 25 units, costs 40💰 each) — penalty rate. Returning to base is always cheaper."><span class="t-void">void</span> <span class="fn-name">buy_water</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">packs</span><span class="fn-paren">)</span></div>
       <div class="api-fn-row" data-desc="Print a number to the console. Used for debugging."><span class="t-void">void</span> <span class="fn-name">print</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">val</span><span class="fn-paren">)</span></div>
     </div>
 
@@ -1324,46 +1459,86 @@ header {
 
 <!-- ═══════════════════════ EXTRA MODAL ════════════════════════ -->
 <div id="extra-overlay" class="s-overlay hidden">
-  <div class="s-modal">
+  <div class="s-modal x-modal-wide">
     <div class="s-head">
       <span class="s-head-icon">🚁</span>
-      <h2>Emergency Supplies</h2>
+      <h2>Drone Services</h2>
+      <span class="x-gold-badge">💰 <b id="x-gold-val">50</b></span>
       <button class="s-close" id="x-close-btn">✕</button>
     </div>
 
     <div class="s-body">
+
+      <!-- ── Upgrades ─────────────────────────────────────── -->
+      <div class="s-section-label" style="color:var(--ac)">⬆ Permanent Upgrades</div>
+
+      <!-- Tank capacity upgrade -->
+      <div class="upg-card">
+        <div class="upg-header">
+          <span class="upg-icon">💧</span>
+          <div class="upg-title-block">
+            <span class="upg-name">Tank Capacity</span>
+            <span class="upg-lvl-text" id="upg-tank-lvl">Lv 0 / 10</span>
+          </div>
+          <div class="upg-stat-block">
+            <span class="upg-stat" id="upg-tank-stat">50 <span class="upg-arrow">→</span> <strong>60</strong></span>
+            <span class="upg-cost" id="upg-tank-cost">60 💰</span>
+          </div>
+          <button class="btn upg-btn" id="upg-tank-btn">Upgrade</button>
+        </div>
+        <div class="upg-bar-track"><div class="upg-bar-fill" id="upg-tank-bar" style="width:0%"></div></div>
+      </div>
+
+      <!-- Energy capacity upgrade -->
+      <div class="upg-card">
+        <div class="upg-header">
+          <span class="upg-icon">🔋</span>
+          <div class="upg-title-block">
+            <span class="upg-name">Battery Capacity</span>
+            <span class="upg-lvl-text" id="upg-energy-lvl">Lv 0 / 10</span>
+          </div>
+          <div class="upg-stat-block">
+            <span class="upg-stat" id="upg-energy-stat">120 <span class="upg-arrow">→</span> <strong>144</strong></span>
+            <span class="upg-cost" id="upg-energy-cost">100 💰</span>
+          </div>
+          <button class="btn upg-btn" id="upg-energy-btn">Upgrade</button>
+        </div>
+        <div class="upg-bar-track"><div class="upg-bar-fill upg-bar-energy" id="upg-energy-bar" style="width:0%"></div></div>
+      </div>
+
+      <!-- ── Emergency supplies ───────────────────────────── -->
+      <div class="s-section-label" style="color:var(--am);margin-top:4px">⚡ Emergency Supplies</div>
+
       <div class="x-desc">
-        Remote drone service delivers emergency resources.<br>
-        Base recharge remains free.
+        ⚠️ Penalty rates — always much more expensive than returning to base.
+        Use only in a true emergency.
       </div>
 
       <!-- Energy block -->
       <div class="x-supply">
-        <div class="s-section-label">🔋 Emergency Energy</div>
         <div class="x-supply-row">
           <div class="x-supply-info">
-            <span class="x-amount">+40 Energy</span>
-            <span class="x-cost">50 💰 Gold</span>
+            <span class="x-amount">🔋 +40 Energy</span>
+            <span class="x-cost x-cost-penalty">80 💰 Gold</span>
           </div>
-          <button class="btn x-buy-btn" id="x-buy-energy">+40 Energy</button>
+          <button class="btn x-buy-btn" id="x-buy-energy">Buy</button>
         </div>
       </div>
 
       <!-- Water block -->
       <div class="x-supply">
-        <div class="s-section-label" style="color:var(--bl)">💧 Emergency Water</div>
         <div class="x-supply-row">
           <div class="x-supply-info">
-            <span class="x-amount">+30 Water</span>
-            <span class="x-cost">30 💰 Gold</span>
+            <span class="x-amount">💧 +25 Water</span>
+            <span class="x-cost x-cost-penalty">40 💰 Gold</span>
           </div>
-          <button class="btn x-buy-btn" id="x-buy-water">+30 Water</button>
+          <button class="btn x-buy-btn" id="x-buy-water">Buy</button>
         </div>
       </div>
 
       <!-- Base hint (shown when at base) -->
       <div class="x-base-hint hidden" id="x-base-hint">
-        Base services are free.
+        🏠 Base recharge is free every tick (energy + water).
       </div>
     </div>
   </div>

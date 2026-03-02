@@ -115,8 +115,8 @@ Usage: `Direction::SOUTH`, `CellState::READY`, `CropType::WHEAT`
 | Type | Growth time | Sell price | Seed cost |
 |---|---|---|---|
 | `CropType::WHEAT`   | 8+12 ticks  | 2 gold  | 1 gold |
-| `CropType::POTATO`  | 14+20 ticks | 5 gold  | 2 gold |
-| `CropType::PUMPKIN` | 25+40 ticks | 12 gold | 4 gold |
+| `CropType::POTATO`  | 14+20 ticks | 6 gold  | 2 gold |
+| `CropType::PUMPKIN` | 25+40 ticks | 10 gold | 5 gold |
 
 **Water:** cell starts at 50 on planting, -2/tick. At 0 — growth pauses.
 **Tank:** max 50, +8/tick at base. `water()` costs 15 units, gives the cell +50.
@@ -185,6 +185,7 @@ const CELL   = 30;                // px per cell
 // Water:
 WATER_START = 50, WATER_DRAIN = 2, TANK_MAX = 50
 WATER_COST = 15, WATER_GIVE = 50, WATER_REFILL_RATE = 8
+WATER_BUY_PACK = 50, WATER_BUY_COST = 10  // slight profit on pumpkins (~1.28x ROI)
 
 // Energy (battery):
 ENERGY_MAX = 120, ENERGY_START = 120, ENERGY_ACTION_COST = 1, ENERGY_CHARGE_RATE = 10
