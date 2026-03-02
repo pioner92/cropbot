@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farm Drone — C++ Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+/* ══════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════════════════════════════ */
+:root {
+  /* Background layers — deepest to most elevated */
+  --bg-0: #060c14;
+  --bg-1: #0b1220;
+  --bg-2: #101928;
+  --bg-3: #172235;
+  --bg-4: #1e2e44;
+  --bg-5: #253654;
+
+  /* Borders */
+  --bd-1: #182236;
+  --bd-2: #1f3050;
+  --bd-3: #2c4468;
+
+  /* Text */
+  --tx-1: #ddeeff;
+  --tx-2: #7a9ab4;
+  --tx-3: #3f576e;
+
+  /* Accent — Harvest Green */
+  --ac:      #38d58c;
+  --ac-dim:  rgba(56, 213, 140, 0.08);
+  --ac-glow: rgba(56, 213, 140, 0.18);
+
+  /* Purple — Direction */
+  --pu:     #a78bfa;
+  --pu-dim: rgba(167, 139, 250, 0.08);
+
+  /* Blue — int types / info */
+  --bl:     #60b8ff;
+  --bl-dim: rgba(96, 184, 255, 0.08);
+
+  /* Amber — crops / economy */
+  --am:     #f0b84a;
+  --am-dim: rgba(240, 184, 74, 0.08);
+
+  /* Red — stop / error */
+  --re:     #f06060;
+  --re-dim: rgba(240, 96, 96, 0.1);
+
+  /* Green for crops section */
+  --gr:     #7ec850;
+
+  --ui-scale: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-1);
+  color: var(--tx-1);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: calc(14px * var(--ui-scale));
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bd-3); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bd-3); filter: brightness(1.3); }
+
+/* ══════════════════════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════════════════════ */
+header {
+  background: var(--bg-0);
+  border-bottom: 1px solid var(--bd-1);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+/* Brand */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 8px;
+}
+.brand-icon { font-size: calc(17px * var(--ui-scale)); line-height: 1; }
+.brand-name {
+  font-size: calc(15px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--ac);
+  letter-spacing: -0.02em;
+}
+.brand-sep { color: var(--bd-3); font-weight: 300; margin: 0 1px; }
+.brand-sub {
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 600;
+  color: var(--tx-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Header stats */
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-3);
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 500;
+  color: var(--tx-2);
+  white-space: nowrap;
+  transition: border-color 0.2s;
+}
+.stat b {
+  font-weight: 700;
+  color: var(--tx-1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(13px * var(--ui-scale));
+}
+.stat.gold b  { color: var(--am); }
+.stat.water b { color: var(--bl); }
+.stat.energy b { color: var(--ac); }
+.stat.score b { color: var(--ac); }
+
+#status-stat {
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Settings button */
+#settings-btn {
+  background: none;
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  color: var(--tx-3);
+  font-size: calc(22px * var(--ui-scale));
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+#settings-btn:hover {
+  background: var(--bg-3);
+  border-color: var(--ac);
+  color: var(--ac);
+}
+#extra-btn {
+  background: none;
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  color: var(--tx-3);
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 10px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+#extra-btn:hover {
+  background: var(--bg-3);
+  border-color: var(--am);
+  color: var(--am);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN LAYOUT
+══════════════════════════════════════════════════════════════ */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LEFT PANEL — Game
+══════════════════════════════════════════════════════════════ */
+#left-panel {
+  width: 660px;
+  min-width: 660px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--bd-1);
+  background: var(--bg-1);
+}
+
+#game-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  background: var(--bg-0);
+}
+
+#game-canvas {
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  image-rendering: pixelated;
+  cursor: default;
+  box-shadow:
+    0 0 0 1px var(--bd-1),
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* ── Controls bar ────────────────────────────────────────────── */
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--bd-1);
+  flex-shrink: 0;
+}
+
+.ctrl-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--bd-2);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.speed-label {
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 600;
+  color: var(--tx-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+#speed-slider {
+  width: 88px;
+  accent-color: var(--ac);
+  cursor: pointer;
+}
+
+#speed-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 600;
+  color: var(--ac);
+  min-width: 22px;
+  text-align: right;
+}
+
+/* ── Console ─────────────────────────────────────────────────── */
+#console-area {
+  height: 108px;
+  background: var(--bg-0);
+  border-top: 1px solid var(--bd-1);
+  overflow-y: auto;
+  padding: 7px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(13px * var(--ui-scale));
+  flex-shrink: 0;
+}
+
+.console-line { line-height: 1.75; }
+.console-info  { color: var(--ac); }
+.console-error { color: var(--re); }
+.console-warn  { color: var(--am); }
+.console-out   { color: var(--tx-2); }
+
+/* ── Seeds bar ───────────────────────────────────────────────── */
+#seeds-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--bd-1);
+  font-size: calc(12px * var(--ui-scale));
+  flex-shrink: 0;
+}
+
+.seeds-label {
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 600;
+  color: var(--tx-3);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  margin-right: 2px;
+}
+
+.seed-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  background: var(--bg-3);
+  border: 1px solid var(--bd-2);
+  border-radius: 5px;
+  font-size: calc(13px * var(--ui-scale));
+}
+.seed-item b {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 600;
+  color: var(--tx-1);
+}
+
+.seeds-hint {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(10px * var(--ui-scale));
+  color: var(--tx-3);
+}
+
+/* ── Legend ──────────────────────────────────────────────────── */
+#legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 12px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--bd-1);
+  flex-shrink: 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 500;
+  color: var(--tx-2);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.14s;
+  white-space: nowrap;
+  line-height: 1;
+}
+.btn:active   { transform: scale(0.96); }
+.btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.btn:disabled:active { transform: none; }
+
+/* Run */
+#run-btn, #run-btn2 {
+  background: var(--ac);
+  color: #050e18;
+  border-color: transparent;
+}
+#run-btn:hover:not(:disabled),
+#run-btn2:hover:not(:disabled) {
+  background: #4ee09e;
+  box-shadow: 0 0 14px var(--ac-glow);
+}
+
+/* Stop */
+#stop-btn, #stop-btn2 {
+  background: var(--re-dim);
+  color: var(--re);
+  border-color: rgba(240, 96, 96, 0.2);
+}
+#stop-btn:hover:not(:disabled),
+#stop-btn2:hover:not(:disabled) {
+  background: var(--re);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 0 12px rgba(240, 96, 96, 0.25);
+}
+
+/* Reset */
+#reset-btn {
+  background: var(--pu-dim);
+  color: var(--pu);
+  border-color: rgba(167, 139, 250, 0.18);
+}
+#reset-btn:hover {
+  background: #6441d8;
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Examples */
+#example-btn {
+  background: var(--pu-dim);
+  color: var(--pu);
+  border-color: rgba(167, 139, 250, 0.18);
+  margin-left: auto;
+}
+#example-btn:hover {
+  background: #6441d8;
+  color: #fff;
+  border-color: transparent;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RIGHT PANEL — Editor
+══════════════════════════════════════════════════════════════ */
+#right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-1);
+  min-width: 0;
+}
+
+#editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--bd-1);
+  flex-shrink: 0;
+  height: 44px;
+}
+
+.editor-label {
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--tx-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+#save-indicator {
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--tx-3);
+  transition: color 0.4s;
+  margin-left: 4px;
+}
+
+#editor-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   API REFERENCE PANEL
+══════════════════════════════════════════════════════════════ */
+#api-panel {
+  /* width: 350px; */
+  min-width: 270px;
+  background: var(--bg-0);
+  border-left: 1px solid var(--bd-1);
+  font-size: calc(12px * var(--ui-scale));
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* Sticky header */
+.api-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-0);
+  border-bottom: 1px solid var(--bd-2);
+  padding: 11px 14px 9px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.api-header-icon { font-size: calc(13px * var(--ui-scale)); line-height: 1; }
+.api-header-title {
+  font-size: calc(14px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--tx-3);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Section */
+.api-section { border-bottom: 1px solid var(--bd-1); }
+
+.api-section-header {
+  padding: 10px 14px 5px;
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--am);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.api-section-header::before {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 10px;
+  border-radius: 1px;
+  background: currentColor;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* Function rows */
+.api-fn-row {
+  padding: 1px 14px 1px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(13px * var(--ui-scale));
+  line-height: 1.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.api-fn-row:last-child { padding-bottom: 8px; }
+
+.t-void  { color: var(--tx-3); }
+.t-int   { color: var(--bl); }
+.t-state { color: var(--ac); }
+.t-crop  { color: var(--am); }
+.t-dir   { color: var(--pu); }
+.fn-name { color: var(--tx-1); font-weight: 500; }
+.fn-paren { color: var(--tx-3); }
+.fn-param { color: var(--tx-2); font-style: italic; }
+
+/* Enum blocks */
+.enum-block {
+  margin: 4px 12px 8px 14px;
+  border-left: 2px solid;
+  padding: 5px 0 5px 9px;
+  border-radius: 0 4px 4px 0;
+}
+.enum-block.dir   { border-color: var(--pu); background: var(--pu-dim); }
+.enum-block.state { border-color: var(--ac); background: var(--ac-dim); }
+.enum-block.crop  { border-color: var(--am); background: var(--am-dim); }
+
+.enum-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.enum-name.dir   { color: var(--pu); }
+.enum-name.state { color: var(--ac); }
+.enum-name.crop  { color: var(--am); }
+
+.enum-members { display: flex; flex-wrap: wrap; gap: 3px; }
+
+.enum-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(11px * var(--ui-scale));
+  padding: 2px 6px;
+  border-radius: 3px;
+  line-height: 1.4;
+  cursor: default;
+}
+.enum-badge.dir   { background: rgba(167,139,250,0.1); color: var(--pu); border: 1px solid rgba(167,139,250,0.2); }
+.enum-badge.state { background: var(--ac-dim);          color: var(--ac); border: 1px solid rgba(56,213,140,0.2); }
+.enum-badge.crop  { background: var(--am-dim);          color: var(--am); border: 1px solid rgba(240,184,74,0.2); }
+
+/* Crop cards */
+.crop-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 12px 10px;
+}
+
+.crop-card {
+  background: var(--bg-2);
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  padding: 6px 9px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.15s;
+}
+.crop-card:hover { border-color: var(--bd-3); }
+
+.crop-icon { font-size: calc(16px * var(--ui-scale)); line-height: 1; flex-shrink: 0; }
+.crop-info { flex: 1; min-width: 0; }
+.crop-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 500;
+  color: var(--tx-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crop-stats { display: flex; gap: 8px; margin-top: 3px; }
+.crop-stat  {  font-size: calc(11px * var(--ui-scale)); color: var(--tx-3); }
+.crop-stat b { font-weight: 600; }
+.crop-stat.time b { color: var(--tx-2); }
+.crop-stat.gold b { color: var(--am); }
+.crop-stat.seed b { color: var(--ac); }
+
+/* Grid info */
+.api-grid-info {
+  padding: 6px 14px 10px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(11px * var(--ui-scale));
+  line-height: 1.85;
+  color: var(--tx-3);
+}
+.api-grid-info b { color: var(--bl); }
+
+/* ══════════════════════════════════════════════════════════════
+   SETTINGS MODAL
+══════════════════════════════════════════════════════════════ */
+.s-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+  animation: s-fadein 0.15s ease;
+}
+.s-overlay.hidden { display: none; }
+@keyframes s-fadein { from { opacity: 0 } to { opacity: 1 } }
+
+.s-modal {
+  background: var(--bg-2);
+  border: 1px solid var(--bd-2);
+  border-radius: 12px;
+  width: 440px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 24px 80px rgba(0, 0, 0, 0.75);
+  animation: s-slidein 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes s-slidein {
+  from { transform: translateY(-18px) scale(0.97); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+.s-head {
+  display: flex;
+  align-items: center;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--bd-1);
+  gap: 10px;
+}
+.s-head-icon { font-size: calc(16px * var(--ui-scale)); }
+.s-head h2 {
+  font-size: calc(16px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--tx-1);
+  flex: 1;
+  letter-spacing: -0.01em;
+}
+.s-close {
+  background: none;
+  border: none;
+  color: var(--tx-3);
+  font-size: calc(16px * var(--ui-scale));
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.15s;
+  line-height: 1;
+}
+.s-close:hover { background: var(--bg-4); color: var(--tx-1); }
+
+.s-body {
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.s-section-label {
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--am);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.s-section-label::before {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 11px;
+  border-radius: 1px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.s-presets {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+.s-preset {
+  flex: 1;
+  padding: 8px 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  color: var(--tx-3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.14s;
+  text-align: center;
+}
+.s-preset:hover { border-color: var(--bd-3); color: var(--tx-2); background: var(--bg-4); }
+.s-preset.active { background: var(--ac-dim); border-color: var(--ac); color: var(--ac); }
+
+.s-custom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tx-2);
+}
+.s-custom label { display: flex; align-items: center; gap: 7px; }
+.s-custom span.lbl {
+  font-size: calc(10px * var(--ui-scale));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tx-3);
+}
+.s-custom input[type=number] {
+  width: 66px;
+  background: var(--bg-1);
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  color: var(--tx-1);
+  padding: 7px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(14px * var(--ui-scale));
+  font-weight: 600;
+  text-align: center;
+  transition: border-color 0.15s;
+  outline: none;
+}
+.s-custom input[type=number]:focus {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 2px var(--ac-glow);
+}
+.s-custom .s-sep { color: var(--tx-3); font-size: calc(20px * var(--ui-scale)); font-weight: 300; }
+
+.s-speed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.s-speed-row input[type=range] { flex: 1; accent-color: var(--bl); }
+.s-speed-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(16px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--bl);
+  min-width: 32px;
+  text-align: right;
+}
+.s-speed-sub {
+  font-size: calc(10px * var(--ui-scale));
+  color: var(--tx-3);
+  margin-top: 5px;
+}
+
+.s-warn {
+  background: rgba(240, 184, 74, 0.06);
+  border: 1px solid rgba(240, 184, 74, 0.2);
+  border-radius: 6px;
+  padding: 10px 13px;
+  font-size: calc(11px * var(--ui-scale));
+  color: var(--am);
+  line-height: 1.55;
+}
+.s-warn.hidden { display: none; }
+
+.s-foot {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--bd-1);
+  justify-content: flex-end;
+}
+.s-apply {
+  background: var(--ac);
+  color: #05100d;
+  font-weight: 700;
+  border-color: transparent;
+}
+.s-apply:hover { background: #4ee09e; box-shadow: 0 0 14px var(--ac-glow); }
+.s-cancel {
+  background: var(--bg-3);
+  color: var(--tx-2);
+  border-color: var(--bd-2);
+}
+.s-cancel:hover { background: var(--bg-4); color: var(--tx-1); }
+
+/* Scale preset buttons (same look as .s-preset but separate class) */
+.s-scale-btn {
+  flex: 1;
+  padding: 8px 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  color: var(--tx-3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.14s;
+  text-align: center;
+}
+.s-scale-btn:hover  { border-color: var(--bd-3); color: var(--tx-2); background: var(--bg-4); }
+.s-scale-btn.active { background: var(--pu-dim); border-color: var(--pu); color: var(--pu); }
+
+/* Editor theme selector buttons */
+.s-theme-row { display: flex; gap: 5px; }
+.s-theme-btn {
+  flex: 1;
+  padding: 8px 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--bd-2);
+  border-radius: 6px;
+  color: var(--tx-3);
+  font-family: 'Inter', sans-serif;
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.14s;
+  text-align: center;
+}
+.s-theme-btn:hover  { border-color: var(--bd-3); color: var(--tx-2); background: var(--bg-4); }
+.s-theme-btn.active { background: var(--bl-dim); border-color: var(--bl); color: var(--bl); }
+
+/* Inline row for slider + value */
+.s-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.s-slider-row input[type=range] { flex: 1; }
+.s-slider-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(15px * var(--ui-scale));
+  font-weight: 700;
+  min-width: 34px;
+  text-align: right;
+}
+.s-sub-label {
+  font-size: calc(10px * var(--ui-scale));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tx-3);
+  margin-bottom: 6px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EXTRA MODAL (Emergency Supplies)
+══════════════════════════════════════════════════════════════ */
+.x-desc {
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--tx-2);
+  line-height: 1.65;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--bd-1);
+}
+.x-supply {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.x-supply-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-3);
+  border: 1px solid var(--bd-2);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.x-supply-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.x-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: calc(15px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--tx-1);
+}
+.x-cost {
+  font-size: calc(11px * var(--ui-scale));
+  color: var(--am);
+  font-weight: 600;
+}
+.x-buy-btn {
+  padding: 8px 14px;
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 700;
+  white-space: nowrap;
+}
+.x-buy-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.x-base-hint {
+  text-align: center;
+  font-size: calc(11px * var(--ui-scale));
+  color: var(--ac);
+  padding: 7px 12px;
+  background: var(--ac-dim);
+  border: 1px solid rgba(56, 213, 140, 0.2);
+  border-radius: 6px;
+}
+.x-base-hint.hidden { display: none; }
+
+/* ── API Tooltip ─────────────────────────────────────────────── */
+#api-tooltip {
+  position: fixed;
+  z-index: 2000;
+  pointer-events: none;
+  background: var(--bg-4);
+  border: 1px solid var(--bd-3);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--tx-1);
+  line-height: 1.45;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.55);
+  max-width: 320px;
+  white-space: normal;
+  transition: opacity 0.08s;
+}
+#api-tooltip.hidden { display: none; }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<header>
+  <div class="brand">
+    <span class="brand-icon">🌾</span>
+    <span class="brand-name">Farm Drone</span>
+    <span class="brand-sep">/</span>
+    <span class="brand-sub">C++ Simulator</span>
+  </div>
+
+  <div class="header-stats">
+    <div class="stat score">🏆 <span>Score</span> <b id="score-val">0</b></div>
+    <div class="stat gold">💰 <b id="gold-val">50</b></div>
+    <div class="stat water">💧 Tank <b id="tank-val">50</b><span style="color:var(--tx-3)">/50</span></div>
+    <div class="stat energy">🔋 Energy <b id="energy-val">120</b><span style="color:var(--tx-3)">/120</span></div>
+    <div class="stat">Tick <b id="tick-val">0</b></div>
+    <div class="stat" id="status-stat">⏹ Stopped</div>
+  </div>
+
+  <button id="extra-btn" title="Emergency Supplies">🚁 Extra</button>
+  <button id="settings-btn" title="Settings">⚙</button>
+</header>
+
+<!-- ═══════════════════════════ MAIN ═══════════════════════════ -->
+<div id="main">
+
+  <!-- LEFT: Game viewport -->
+  <div id="left-panel">
+
+    <div id="game-area">
+      <canvas id="game-canvas" width="600" height="600"></canvas>
+    </div>
+
+    <div id="controls">
+      <button class="btn" id="run-btn">▶ Run</button>
+      <button class="btn" id="stop-btn" disabled>⏹ Stop</button>
+      <button class="btn" id="reset-btn">↺ Reset</button>
+      <div class="ctrl-sep"></div>
+      <span class="speed-label">Speed</span>
+      <input type="range" id="speed-slider" min="1" max="20" value="5">
+      <span id="speed-display">5</span>
+    </div>
+
+    <div id="console-area">
+      <div class="console-line console-info">// Console output. Use print(val) in your code.</div>
+    </div>
+
+    <div id="seeds-bar">
+      <span class="seeds-label">Seeds</span>
+      <div class="seed-item">🌾 <b id="seeds-wheat">10</b></div>
+      <div class="seed-item">🥔 <b id="seeds-potato">5</b></div>
+      <div class="seed-item">🎃 <b id="seeds-pumpkin">2</b></div>
+      <span class="seeds-hint">buy_seeds(CropType::WHEAT, 10)</span>
+    </div>
+
+    <div id="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#141e2c;border:1px solid rgba(56,213,140,0.5)"></div>Base</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5c3d1e"></div>Empty</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7a5c30"></div>Tilled</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#6b8e23"></div>Planted</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#90c040"></div>Growing</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f0d000"></div>Ready</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#38d58c;border-radius:50%"></div>Drone</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Code editor -->
+  <div id="right-panel">
+    <div id="editor-toolbar">
+      <span class="editor-label">C++</span>
+      <button class="btn" id="run-btn2">▶ Run</button>
+      <button class="btn" id="stop-btn2" disabled>⏹ Stop</button>
+      <span id="save-indicator">● saved</span>
+      <button class="btn" id="example-btn">Examples ▾</button>
+    </div>
+    <div id="editor-container"></div>
+  </div>
+
+  <!-- API Reference panel -->
+  <div id="api-panel">
+    <div class="api-header">
+      <span class="api-header-icon">📋</span>
+      <span class="api-header-title">API Reference</span>
+    </div>
+
+    <!-- Types / Enums -->
+    <div class="api-section">
+      <div class="api-section-header">Data Types</div>
+
+      <div class="enum-block dir">
+        <div class="enum-name dir">Direction</div>
+        <div class="enum-members">
+          <span class="enum-badge dir">NORTH</span>
+          <span class="enum-badge dir">EAST</span>
+          <span class="enum-badge dir">SOUTH</span>
+          <span class="enum-badge dir">WEST</span>
+        </div>
+      </div>
+
+      <div class="enum-block state">
+        <div class="enum-name state">CellState</div>
+        <div class="enum-members">
+          <span class="enum-badge state">EMPTY</span>
+          <span class="enum-badge state">TILLED</span>
+          <span class="enum-badge state">PLANTED</span>
+          <span class="enum-badge state">GROWING</span>
+          <span class="enum-badge state">READY</span>
+          <span class="enum-badge state">BASE</span>
+        </div>
+      </div>
+
+      <div class="enum-block crop">
+        <div class="enum-name crop">CropType</div>
+        <div class="enum-members">
+          <span class="enum-badge crop">WHEAT</span>
+          <span class="enum-badge crop">POTATO</span>
+          <span class="enum-badge crop">PUMPKIN</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Crops -->
+    <div class="api-section">
+      <div class="api-section-header" style="color:var(--gr)">Crops</div>
+      <div class="crop-cards">
+        <div class="crop-card">
+          <span class="crop-icon">🌾</span>
+          <div class="crop-info">
+            <div class="crop-name">CropType::WHEAT</div>
+            <div class="crop-stats">
+              <span class="crop-stat time">⏱ <b>8+12</b></span>
+              <span class="crop-stat gold">💰 <b>2</b></span>
+              <span class="crop-stat seed">🌱 <b>1</b></span>
+            </div>
+          </div>
+        </div>
+        <div class="crop-card">
+          <span class="crop-icon">🥔</span>
+          <div class="crop-info">
+            <div class="crop-name">CropType::POTATO</div>
+            <div class="crop-stats">
+              <span class="crop-stat time">⏱ <b>14+20</b></span>
+              <span class="crop-stat gold">💰 <b>5</b></span>
+              <span class="crop-stat seed">🌱 <b>2</b></span>
+            </div>
+          </div>
+        </div>
+        <div class="crop-card">
+          <span class="crop-icon">🎃</span>
+          <div class="crop-info">
+            <div class="crop-name">CropType::PUMPKIN</div>
+            <div class="crop-stats">
+              <span class="crop-stat time">⏱ <b>25+40</b></span>
+              <span class="crop-stat gold">💰 <b>12</b></span>
+              <span class="crop-stat seed">🌱 <b>4</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Movement -->
+    <div class="api-section">
+      <div class="api-section-header">Movement · 1 tick</div>
+      <div class="api-fn-row" data-desc="Move one step in the given direction. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">move</span><span class="fn-paren">(</span><span class="t-dir">Direction</span> <span class="fn-param">dir</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Move one step north. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">move_north</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Move one step south. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">move_south</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Move one step east. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">move_east</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Move one step west. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">move_west</span><span class="fn-paren">()</span></div>
+    </div>
+
+    <!-- Field -->
+    <div class="api-section">
+      <div class="api-section-header">Field · 1 tick</div>
+      <div class="api-fn-row" data-desc="Till an empty cell to prepare it for planting. 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">till</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Plant a crop. Cell must be tilled and seeds must be available. 1 tick."><span class="t-void">void</span> <span class="fn-name">plant</span><span class="fn-paren">(</span><span class="t-crop">CropType</span> <span class="fn-param">crop</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Harvest a ripe crop (READY state). 1 tick, 1 energy."><span class="t-void">void</span> <span class="fn-name">harvest</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Water the current cell from the tank. 1 tick, 1 energy, uses tank water."><span class="t-void">void</span> <span class="fn-name">water</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Skip the given number of ticks. No energy cost."><span class="t-void">void</span> <span class="fn-name">wait</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">ticks</span><span class="fn-paren">)</span></div>
+    </div>
+
+    <!-- Queries -->
+    <div class="api-section">
+      <div class="api-section-header">Query · 0 ticks</div>
+      <div class="api-fn-row" data-desc="State of the current cell: EMPTY/TILLED/PLANTED/GROWING/READY/BASE."><span class="t-state">CellState</span> <span class="fn-name">get_cell_state</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="State of the cell at coordinates (x, y)."><span class="t-state">CellState</span> <span class="fn-name">get_cell_state</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Crop type in the current cell: WHEAT, POTATO or PUMPKIN."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Crop type in the cell at (x, y)."><span class="t-crop">CropType</span> <span class="fn-name">get_crop</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Water level of the current cell (0–100). Growth pauses when 0."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Water level of the cell at (x, y)."><span class="t-int">int</span> <span class="fn-name">get_water_level</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">x,y</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Water in the drone tank (max 50). Refills automatically at base."><span class="t-int">int</span> <span class="fn-name">get_tank</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Current battery charge (max 120). Recharges automatically at base."><span class="t-int">int</span> <span class="fn-name">get_energy</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Maximum battery capacity of the drone (constant value)."><span class="t-int">int</span> <span class="fn-name">get_max_energy</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Returns 1 if the drone is at base (0,0), otherwise 0."><span class="t-int">int</span> <span class="fn-name">is_at_base</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Current X and Y coordinates of the drone."><span class="t-int">int</span> <span class="fn-name">get_x</span><span class="fn-paren">()</span><span class="t-void"> · </span><span class="fn-name">get_y</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Number of ticks elapsed since the program started."><span class="t-int">int</span> <span class="fn-name">get_ticks</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Current score — total number of successful harvests."><span class="t-int">int</span> <span class="fn-name">get_score</span><span class="fn-paren">()</span></div>
+    </div>
+
+    <!-- Economy -->
+    <div class="api-section">
+      <div class="api-section-header" style="color:var(--am)">Economy · 0 ticks</div>
+      <div class="api-fn-row" data-desc="How much gold the player currently has."><span class="t-int">int</span>  <span class="fn-name">get_gold</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Number of seeds of the given crop type in inventory."><span class="t-int">int</span>  <span class="fn-name">get_seeds</span><span class="fn-paren">(</span><span class="t-crop">CropType</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Buy seeds for gold. Cost: Wheat 1💰, Potato 2💰, Pumpkin 4💰."><span class="t-void">void</span> <span class="fn-name">buy_seeds</span><span class="fn-paren">(</span><span class="t-crop">CropType</span><span class="fn-paren">,</span> <span class="t-int">int</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Buy water for the tank (1 pack = 25 units, costs 5💰 each)."><span class="t-void">void</span> <span class="fn-name">buy_water</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">packs</span><span class="fn-paren">)</span></div>
+      <div class="api-fn-row" data-desc="Print a number to the console. Used for debugging."><span class="t-void">void</span> <span class="fn-name">print</span><span class="fn-paren">(</span><span class="t-int">int</span> <span class="fn-param">val</span><span class="fn-paren">)</span></div>
+    </div>
+
+    <!-- Constants -->
+    <div class="api-section">
+      <div class="api-section-header" style="color:var(--bl)">Constants</div>
+      <div class="api-grid-info">
+        <b>GRID_W</b> × <b>GRID_H</b> = 10 × 10<br>
+        <span style="color:var(--tx-3)">// 1 seed = 1💰</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════ SETTINGS MODAL ════════════════════ -->
+<div id="settings-overlay" class="s-overlay hidden">
+  <div class="s-modal">
+    <div class="s-head">
+      <span class="s-head-icon">⚙</span>
+      <h2>Settings</h2>
+      <button class="s-close" id="s-close-btn">✕</button>
+    </div>
+
+    <div class="s-body">
+      <!-- Grid size -->
+      <div>
+        <div class="s-section-label">Grid Size</div>
+        <div class="s-presets">
+          <button class="s-preset" data-w="5"  data-h="5">5×5</button>
+          <button class="s-preset" data-w="8"  data-h="8">8×8</button>
+          <button class="s-preset active" data-w="10" data-h="10">10×10</button>
+          <button class="s-preset" data-w="15" data-h="15">15×15</button>
+          <button class="s-preset" data-w="20" data-h="20">20×20</button>
+        </div>
+        <div class="s-custom">
+          <label>
+            <span class="lbl">W</span>
+            <input type="number" id="s-grid-w" min="3" max="30" value="10">
+          </label>
+          <span class="s-sep">×</span>
+          <label>
+            <span class="lbl">H</span>
+            <input type="number" id="s-grid-h" min="3" max="30" value="10">
+          </label>
+        </div>
+      </div>
+
+      <!-- Speed -->
+      <div>
+        <div class="s-section-label" style="color:var(--bl)">
+          Speed &nbsp;<span id="s-speed-num" class="s-speed-num">5</span>
+        </div>
+        <div class="s-speed-row">
+          <input type="range" id="s-speed" min="1" max="20" value="5">
+        </div>
+        <div class="s-speed-sub">ticks/sec — takes effect immediately</div>
+      </div>
+
+      <!-- UI scale -->
+      <div>
+        <div class="s-section-label" style="color:var(--pu)">UI Scale</div>
+        <div class="s-theme-row">
+          <button class="s-scale-btn" data-scale="0.9">90%</button>
+          <button class="s-scale-btn active" data-scale="1">100%</button>
+          <button class="s-scale-btn" data-scale="1.1">110%</button>
+          <button class="s-scale-btn" data-scale="1.25">125%</button>
+        </div>
+        <div class="s-speed-sub">scales interface text and controls</div>
+      </div>
+
+      <!-- Editor -->
+      <div>
+        <div class="s-section-label" style="color:var(--bl)">Editor</div>
+
+        <div class="s-sub-label">Font Size</div>
+        <div class="s-slider-row">
+          <input type="range" id="s-editor-font" min="11" max="24" value="14">
+          <span id="s-editor-font-num" class="s-slider-val" style="color:var(--bl)">14</span>
+        </div>
+
+        <div class="s-sub-label" style="margin-top:10px;">Theme</div>
+        <div class="s-theme-row">
+          <button class="s-theme-btn" data-theme="vs">Light</button>
+          <button class="s-theme-btn active" data-theme="vs-dark">Dark</button>
+        </div>
+      </div>
+
+      <!-- Warning -->
+      <div class="s-warn hidden" id="s-warn">
+        ⚠ Changing the grid size will stop the game, reset progress, and require recompiling WASM code.
+      </div>
+    </div>
+
+    <div class="s-foot">
+      <button class="btn s-cancel" id="s-cancel-btn">Cancel</button>
+      <button class="btn s-apply"  id="s-apply-btn">✓ Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ EXTRA MODAL ════════════════════════ -->
+<div id="extra-overlay" class="s-overlay hidden">
+  <div class="s-modal">
+    <div class="s-head">
+      <span class="s-head-icon">🚁</span>
+      <h2>Emergency Supplies</h2>
+      <button class="s-close" id="x-close-btn">✕</button>
+    </div>
+
+    <div class="s-body">
+      <div class="x-desc">
+        Remote drone service delivers emergency resources.<br>
+        Base recharge remains free.
+      </div>
+
+      <!-- Energy block -->
+      <div class="x-supply">
+        <div class="s-section-label">🔋 Emergency Energy</div>
+        <div class="x-supply-row">
+          <div class="x-supply-info">
+            <span class="x-amount">+40 Energy</span>
+            <span class="x-cost">50 💰 Gold</span>
+          </div>
+          <button class="btn x-buy-btn" id="x-buy-energy">+40 Energy</button>
+        </div>
+      </div>
+
+      <!-- Water block -->
+      <div class="x-supply">
+        <div class="s-section-label" style="color:var(--bl)">💧 Emergency Water</div>
+        <div class="x-supply-row">
+          <div class="x-supply-info">
+            <span class="x-amount">+30 Water</span>
+            <span class="x-cost">30 💰 Gold</span>
+          </div>
+          <button class="btn x-buy-btn" id="x-buy-water">+30 Water</button>
+        </div>
+      </div>
+
+      <!-- Base hint (shown when at base) -->
+      <div class="x-base-hint hidden" id="x-base-hint">
+        Base services are free.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Monaco Editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
