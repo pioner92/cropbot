@@ -1,39 +1,20 @@
 # syntax = docker/dockerfile:1
 
-# Adjust NODE_VERSION as desired
-ARG NODE_VERSION=22.21.1
-FROM node:${NODE_VERSION}-slim AS base
+  FROM emscripten/emsdk:3.1.74
+                                                                                          
+  # Install Node.js 20                                                                  
+  RUN apt-get update && apt-get install -y curl && \
+      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+      apt-get install -y nodejs && \
+      apt-get clean && rm -rf /var/lib/apt/lists/*
 
-LABEL fly_launch_runtime="Node.js"
+  WORKDIR /app
 
-# Node.js app lives here
-WORKDIR /app
+  COPY package.json ./
+  RUN npm install --omit=dev
 
-# Set production environment
-ENV NODE_ENV="production"
+  COPY . .
 
+  EXPOSE 3000
 
-# Throw-away build stage to reduce size of final image
-FROM base AS build
-
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
-
-# Install node modules
-COPY package-lock.json package.json ./
-RUN npm ci
-
-# Copy application code
-COPY . .
-
-
-# Final stage for app image
-FROM base
-
-# Copy built application
-COPY --from=build /app /app
-
-# Start the server by default, this can be overwritten at runtime
-EXPOSE 3000
-CMD [ "npm", "run", "start" ]
+  CMD ["node", "server.js"]
