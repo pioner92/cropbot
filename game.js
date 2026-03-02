@@ -1994,6 +1994,78 @@ document.addEventListener('keydown', e => {
 }());
 
 // ────────────────────────────────────────────────────────────
+//  PANEL RESIZE
+// ────────────────────────────────────────────────────────────
+(function initPanelResize() {
+  const leftPanel   = document.getElementById('left-panel');
+  const apiPanel    = document.getElementById('api-panel');
+  const handleLeft  = document.getElementById('resize-left');
+  const handleRight = document.getElementById('resize-right');
+
+  const MIN_LEFT   = 460;
+  const MIN_EDITOR = 260;
+  const MIN_API    = 180;
+
+  function makeDragger(handle, getSize, setSize, minSize, maxSizeFn, invert) {
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      const startX    = e.clientX;
+      const startSize = getSize();
+      handle.classList.add('rh-active');
+      document.body.style.cursor     = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      function onMove(e) {
+        const delta   = e.clientX - startX;
+        const raw     = invert ? startSize - delta : startSize + delta;
+        const clamped = Math.max(minSize, Math.min(maxSizeFn(), raw));
+        setSize(clamped);
+        window.dispatchEvent(new Event('resize')); // Monaco relayout
+      }
+
+      function onUp() {
+        handle.classList.remove('rh-active');
+        document.body.style.cursor     = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',   onUp);
+      }
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onUp);
+    });
+  }
+
+  const mainEl = document.getElementById('main');
+
+  // Left handle: drag right → left-panel grows, drag left → shrinks
+  makeDragger(
+    handleLeft,
+    () => leftPanel.getBoundingClientRect().width,
+    w  => { leftPanel.style.width = w + 'px'; },
+    MIN_LEFT,
+    () => mainEl.getBoundingClientRect().width
+          - MIN_EDITOR
+          - apiPanel.getBoundingClientRect().width
+          - 10,  // two handles × 5px
+    false
+  );
+
+  // Right handle: drag right → api-panel shrinks, drag left → grows
+  makeDragger(
+    handleRight,
+    () => apiPanel.getBoundingClientRect().width,
+    w  => { apiPanel.style.width = w + 'px'; },
+    MIN_API,
+    () => mainEl.getBoundingClientRect().width
+          - leftPanel.getBoundingClientRect().width
+          - MIN_EDITOR
+          - 10,
+    true  // invert: moving right decreases api-panel width
+  );
+}());
+
+// ────────────────────────────────────────────────────────────
 //  INIT
 // ────────────────────────────────────────────────────────────
 const savedSettings = loadSettingsLS();

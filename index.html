@@ -459,15 +459,40 @@ header {
   overflow: hidden;
 }
 
+/* ── Panel Resize Handles ─────────────────────────────────── */
+.resize-handle {
+  width: 5px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  position: relative;
+  z-index: 5;
+  background: transparent;
+}
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 2px;
+  width: 1px;
+  background: var(--bd-1);
+  transition: background 0.12s, left 0.08s, width 0.08s;
+}
+.resize-handle:hover::after,
+.resize-handle.rh-active::after {
+  background: var(--ac);
+  left: 1px;
+  width: 3px;
+}
+
 /* ══════════════════════════════════════════════════════════════
    LEFT PANEL — Game
 ══════════════════════════════════════════════════════════════ */
 #left-panel {
   width: 660px;
-  min-width: 660px;
+  min-width: 460px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--bd-1);
   background: var(--bg-1);
 }
 
@@ -718,7 +743,7 @@ header {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-1);
-  min-width: 0;
+  min-width: 260px;
 }
 
 #editor-toolbar {
@@ -757,8 +782,8 @@ header {
    API REFERENCE PANEL
 ══════════════════════════════════════════════════════════════ */
 #api-panel {
-  /* width: 350px; */
-  min-width: 270px;
+  width: 300px;
+  min-width: 180px;
   background: var(--bg-0);
   border-left: 1px solid var(--bd-1);
   font-size: calc(12px * var(--ui-scale));
@@ -1546,6 +1571,8 @@ header {
     </div>
   </div>
 
+  <div class="resize-handle" id="resize-left"></div>
+
   <!-- RIGHT: Code editor -->
   <div id="right-panel">
     <div id="editor-toolbar">
@@ -1557,6 +1584,8 @@ header {
     </div>
     <div id="editor-container"></div>
   </div>
+
+  <div class="resize-handle" id="resize-right"></div>
 
   <!-- API Reference panel -->
   <div id="api-panel">
