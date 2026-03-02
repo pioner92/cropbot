@@ -1,4 +1,4 @@
-# CLAUDE.md — Farm Drone Game
+# CLAUDE.md — Cropbot
 
 Instructions for Claude when working on this project.
 

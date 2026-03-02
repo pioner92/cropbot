@@ -84,7 +84,7 @@ app.post('/compile', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log('');
-  console.log('  🌾  Farm Drone — Compiler Server');
+  console.log('  🤖  Cropbot — Compiler Server');
   console.log(`  ➜   http://localhost:${PORT}`);
   console.log('');
 });

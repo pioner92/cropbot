@@ -1,5 +1,5 @@
 // ============================================================
-//  FARM DRONE GAME  —  game.js
+//  CROPBOT  —  game.js
 //  C++ code editor + 20x20 grid + drone simulation
 // ============================================================
 
@@ -1767,6 +1767,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeExtra()
 // ────────────────────────────────────────────────────────────
 const savedSettings = loadSettingsLS();
 applySettings(savedSettings);
-consolePrint('// Welcome to Farm Drone!', 'console-info');
+consolePrint('// Welcome to Cropbot!', 'console-info');
 consolePrint('// Write C++ in the editor and press Run (Ctrl+Enter)', 'console-info');
 consolePrint('// Load examples via the Examples button (top right)', 'console-info');
