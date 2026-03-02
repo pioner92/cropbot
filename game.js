@@ -90,7 +90,7 @@ function initGrid() {
   for (let y = 0; y < GRID_H; y++) {
     game.grid[y] = [];
     for (let x = 0; x < GRID_W; x++) {
-      game.grid[y][x] = { state: State.EMPTY, growTimer: 0, cropType: -1, waterLevel: 0 };
+      game.grid[y][x] = { state: State.EMPTY, growTimer: 0, cropType: -1, waterLevel: 0, dirty: true };
     }
   }
   // Mark the base tile — always at (0,0)
@@ -137,6 +137,7 @@ function growTick() {
           }
         }
         cell.waterLevel = Math.max(0, cell.waterLevel - WATER_DRAIN);
+        cell.dirty = true; // water bar + progress bar change every tick
       }
     }
   }
@@ -148,6 +149,26 @@ function growTick() {
 const canvas = document.getElementById('game-canvas');
 const ctx    = canvas.getContext('2d');
 
+// Pre-rendered furrow texture — avoids ~600 stroke() calls per frame at 60fps
+const furrowCanvas = new OffscreenCanvas(CELL, CELL);
+(function() {
+  const fc = furrowCanvas.getContext('2d');
+  fc.strokeStyle = 'rgba(20,10,2,0.5)';
+  fc.lineWidth = 1;
+  for (let fy = 7; fy < CELL; fy += 9) {
+    fc.beginPath(); fc.moveTo(3, fy); fc.lineTo(CELL - 3, fy); fc.stroke();
+  }
+})();
+
+function markDirty(x, y) {
+  if (x >= 0 && x < GRID_W && y >= 0 && y < GRID_H) game.grid[y][x].dirty = true;
+}
+function markAllDirty() {
+  for (let y = 0; y < GRID_H; y++)
+    for (let x = 0; x < GRID_W; x++)
+      game.grid[y][x].dirty = true;
+}
+
 // Drone visual animation state
 let droneAnim = { x: 0, y: 0, tx: 0, ty: 0, progress: 1.0,
                   propAngle: 0, bobPhase: 0, tiltX: 0, tiltY: 0 };
@@ -155,18 +176,18 @@ let droneAnim = { x: 0, y: 0, tx: 0, ty: 0, progress: 1.0,
 function lerp(a, b, t) { return a + (b - a) * Math.min(t, 1); }
 
 function render(animProgress) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Grid background
-  ctx.fillStyle = '#2a1a0e';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Draw cells
+  // Only redraw dirty cells — skip unchanged ones to save ~1000 canvas ops/frame
   for (let y = 0; y < GRID_H; y++) {
     for (let x = 0; x < GRID_W; x++) {
       const cell = game.grid[y][x];
+      if (!cell.dirty) continue;
+      cell.dirty = false;
       const px = x * CELL, py = y * CELL;
       const crop = cell.cropType >= 0 ? CROPS[cell.cropType] : null;
+
+      // ── Clear cell with grid background ────────────────────
+      ctx.fillStyle = '#2a1a0e';
+      ctx.fillRect(px, py, CELL, CELL);
 
       // ── BASE tile ───────────────────────────────────────────
       if (cell.state === State.BASE) {
@@ -178,23 +199,17 @@ function render(animProgress) {
       ctx.fillStyle = cell.state === State.EMPTY ? '#2d1808' : '#3d2210';
       ctx.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
 
-      // ── Furrow texture for tilled+ states ──────────────────
+      // ── Furrow texture for tilled+ states (pre-rendered blit) ──
       if (cell.state !== State.EMPTY) {
-        ctx.strokeStyle = 'rgba(20,10,2,0.5)';
-        ctx.lineWidth = 1;
-        for (let fy = 7; fy < CELL; fy += 9) {
-          ctx.beginPath();
-          ctx.moveTo(px + 3, py + fy);
-          ctx.lineTo(px + CELL - 3, py + fy);
-          ctx.stroke();
-        }
+        ctx.drawImage(furrowCanvas, px, py);
       }
 
-      // ── Water tint ─────────────────────────────────────────
+      // ── Water tint (globalAlpha avoids string creation) ────
       if (cell.waterLevel > 0 && cell.state >= State.PLANTED) {
-        const alpha = (cell.waterLevel / WATER_MAX) * 0.18;
-        ctx.fillStyle = `rgba(40,120,255,${alpha.toFixed(2)})`;
+        ctx.globalAlpha = (cell.waterLevel / WATER_MAX) * 0.18;
+        ctx.fillStyle = '#2878ff';
         ctx.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+        ctx.globalAlpha = 1;
       }
 
       // ── Dry warning ────────────────────────────────────────
@@ -244,7 +259,7 @@ function render(animProgress) {
     }
   }
 
-  // Drone (animated)
+  // Drone (animated — always drawn on top)
   const t  = animProgress !== undefined ? animProgress : 1.0;
   const dx = lerp(droneAnim.x, droneAnim.tx, t) * CELL + CELL / 2;
   const dy = lerp(droneAnim.y, droneAnim.ty, t) * CELL + CELL / 2;
@@ -252,11 +267,13 @@ function render(animProgress) {
   // Charging glow ring when drone is on base
   if (isDroneOnBase()) {
     const pulse = 0.22 + 0.12 * Math.sin(droneAnim.bobPhase * 2);
+    ctx.globalAlpha = pulse;
+    ctx.strokeStyle = '#38d58c';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.arc(dx, dy, CELL * 0.40, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(56, 213, 140, ${pulse.toFixed(2)})`;
-    ctx.lineWidth = 2.5;
     ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   drawDrone(dx, dy, t);
@@ -607,6 +624,7 @@ const droneActions = {
       cell.state    = State.TILLED;
       cell.cropType = -1;
       cell.waterLevel = 0;
+      cell.dirty = true;
     }
   },
   plant(cropTypeArg) {
@@ -621,6 +639,7 @@ const droneActions = {
     cell.cropType   = ct;
     cell.growTimer  = 0;
     cell.waterLevel = WATER_START;
+    cell.dirty = true;
   },
   harvest() {
     const cell = game.grid[game.drone.y][game.drone.x];
@@ -632,8 +651,8 @@ const droneActions = {
     cell.cropType   = -1;
     cell.growTimer  = 0;
     cell.waterLevel = 0;
+    cell.dirty = true;
     game.score++;
-    updateStats();
   },
   water() {
     const cell = game.grid[game.drone.y][game.drone.x];
@@ -641,6 +660,7 @@ const droneActions = {
     if (eco.tank < WATER_COST) return; // not enough water in tank
     eco.tank -= WATER_COST;
     cell.waterLevel = Math.min(WATER_MAX, cell.waterLevel + WATER_GIVE);
+    cell.dirty = true;
   },
   get_state_at(x, y) {
     if (x < 0 || x >= GRID_W || y < 0 || y >= GRID_H) return -1;
@@ -768,6 +788,7 @@ function stopExecution(msg) {
   setRunUI(false);
   setCompileUI('idle');
   if (msg) consolePrint(msg, msg.startsWith('Error') ? 'console-error' : 'console-info');
+  markAllDirty();
   render(1.0);
 }
 
@@ -808,8 +829,15 @@ function gameLoop(now) {
   droneAnim.propAngle = (droneAnim.propAngle + (isMoving ? 0.48 : 0.22)) % (Math.PI * 4);
   droneAnim.bobPhase  = (droneAnim.bobPhase  + 0.04) % (Math.PI * 2);
 
+  // Drone sprite overflows cell boundary slightly — mark 3×3 area around source+target dirty
+  for (let dy2 = -1; dy2 <= 1; dy2++) {
+    for (let dx2 = -1; dx2 <= 1; dx2++) {
+      markDirty(droneAnim.x  + dx2, droneAnim.y  + dy2);
+      markDirty(droneAnim.tx + dx2, droneAnim.ty + dy2);
+    }
+  }
+
   render(droneAnim.progress);
-  updateStats();
 
   if (game.running) rafHandle = requestAnimationFrame(gameLoop);
 }
@@ -826,7 +854,8 @@ function doTick() {
   }
 
   // WASM mode
-  if (wasmMode) { doWasmTick(); return; }
+  if (wasmMode) { doWasmTick(); }
+  updateStats();
 }
 
 // ────────────────────────────────────────────────────────────
