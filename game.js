@@ -1291,7 +1291,7 @@ int main() {
     while (1) {
         process_cell();
         if (dir == Direction::EAST) {
-            if (get_x() < GRID_W - 1) move(Direction::EAST);
+            if (get_x() < get_max_x() - 1) move(Direction::EAST);
             else { 
               //for movement below
               //move(Direction::SOUTH); 
@@ -1336,7 +1336,7 @@ int main() {
         process_cell(crop);
 
         if (dir == Direction::EAST) {
-            if (get_x() < GRID_W - 1) move(Direction::EAST);
+            if (get_x() < get_max_x() - 1) move(Direction::EAST);
             else { move(Direction::SOUTH); dir = Direction::WEST; }
         } else {
             if (get_x() > 0) move(Direction::WEST);
@@ -1384,7 +1384,7 @@ int main() {
         tend_cell();
 
         if (dir == Direction::EAST) {
-            if (get_x() < GRID_W - 1) move(Direction::EAST);
+            if (get_x() < get_max_x() - 1) move(Direction::EAST);
             else { move(Direction::SOUTH); dir = Direction::WEST; }
         } else {
             if (get_x() > 0) move(Direction::WEST);
@@ -1411,7 +1411,7 @@ int main() {
         if (s == CellState::READY)  harvest();
 
         if (dir == Direction::EAST) {
-            if (get_x() < GRID_W - 1) move(Direction::EAST);
+            if (get_x() < get_max_x() - 1) move(Direction::EAST);
             else { move(Direction::SOUTH); dir = Direction::WEST; }
         } else {
             if (get_x() > 0) move(Direction::WEST);
@@ -1644,10 +1644,6 @@ function applySettings(nextSettings) {
     monacoEditor.updateOptions({ fontSize: editorFontSize });
     monaco.editor.setTheme(editorTheme);
   }
-
-  // Update API panel grid info
-  const gridInfo = document.querySelector('.api-grid-info');
-  if (gridInfo) gridInfo.innerHTML = `<b>GRID_W</b> × <b>GRID_H</b> = ${GRID_W} × ${GRID_H}<br><span style="color:var(--tx-3)">// 1 seed = 1💰</span>`;
 
   if (gridChanged || game.grid.length === 0) {
     initGrid();

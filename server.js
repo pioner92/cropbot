@@ -57,7 +57,7 @@ app.post('/compile', async (req, res) => {
         '-s',   'ERROR_ON_UNDEFINED_SYMBOLS=0',
         '-s',   'WASM_BIGINT=0',
         '-O1',
-        '-std=c++17',
+        '-std=c++20',
         '-fno-exceptions',
       ], { timeout: 30_000 }, (err, stdout, stderr) => {
         if (err) {

@@ -2,6 +2,8 @@
 
 > Program a farming drone in real C++. Watch it work.
 
+**🚀 [Play now → cropbot.fly.dev](https://cropbot.fly.dev)**
+
 ![Cropbot preview](assets/preview.png)
 
 A browser-based farming game where you write C++ code to automate a drone.

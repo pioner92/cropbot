@@ -1767,8 +1767,10 @@ header {
     <!-- Drone Status -->
     <div class="api-section">
       <div class="api-section-header" style="color:var(--bl)">Drone <span class="api-cost-badge">0 ticks</span></div>
-      <div class="api-fn-row" data-desc="Current X coordinate of the drone. 0 = west edge. Grid width = GRID_W."><span class="t-int">int</span> <span class="fn-name">get_x</span><span class="fn-paren">()</span></div>
-      <div class="api-fn-row" data-desc="Current Y coordinate of the drone. 0 = north edge. Grid height = GRID_H."><span class="t-int">int</span> <span class="fn-name">get_y</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Current X coordinate of the drone. 0 = west edge."><span class="t-int">int</span> <span class="fn-name">get_x</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row api-fn-alt" data-desc="Grid width. Eastern boundary = get_max_x() - 1."><span class="t-int">int</span> <span class="fn-name">get_max_x</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row" data-desc="Current Y coordinate of the drone. 0 = north edge."><span class="t-int">int</span> <span class="fn-name">get_y</span><span class="fn-paren">()</span></div>
+      <div class="api-fn-row api-fn-alt" data-desc="Grid height. Southern boundary = get_max_y() - 1."><span class="t-int">int</span> <span class="fn-name">get_max_y</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Returns 1 if the drone is at base (0, 0). Base recharges energy (+10/tick) and tank (+8/tick)."><span class="t-int">int</span> <span class="fn-name">is_at_base</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row" data-desc="Current battery charge. Each action costs 1 energy. Recharges at base (+10/tick)."><span class="t-int">int</span> <span class="fn-name">get_energy</span><span class="fn-paren">()</span></div>
       <div class="api-fn-row api-fn-alt" data-desc="Maximum battery capacity. Upgradeable in Extra panel. Default: 60."><span class="t-int">int</span> <span class="fn-name">get_max_energy</span><span class="fn-paren">()</span></div>
@@ -2059,13 +2061,13 @@ header {
             <div><b>move_north()</b> → y − 1</div>
             <div style="margin-top:4px;color:var(--tx-3)">Each move costs 1 tick and 1 energy.</div>
             <div><b>get_x()</b> / <b>get_y()</b> — current position</div>
-            <div>Field size: <b>GRID_W × GRID_H</b> (10×10 by default)</div>
+            <div>Field size: <b>get_max_x()</b> × <b>get_max_y()</b> (10×10 by default)</div>
           </div>
         </div>
 
         <div class="guide-code"><span class="gc-cmt">// Sweep the first row east, then return</span>
-<span class="gc-kw">while</span> (<span class="gc-fn">get_x</span>() &lt; GRID_W - <span class="gc-num">1</span>) <span class="gc-fn">move_east</span>();
-<span class="gc-kw">while</span> (<span class="gc-fn">get_x</span>() &gt; <span class="gc-num">0</span>)          <span class="gc-fn">move_west</span>();</div>
+<span class="gc-kw">while</span> (<span class="gc-fn">get_x</span>() &lt; <span class="gc-fn">get_max_x</span>() - <span class="gc-num">1</span>) <span class="gc-fn">move_east</span>();
+<span class="gc-kw">while</span> (<span class="gc-fn">get_x</span>() &gt; <span class="gc-num">0</span>)               <span class="gc-fn">move_west</span>();</div>
       </div>
 
       <!-- ── Farming Cycle ────────────────────────────── -->
@@ -2251,8 +2253,8 @@ header {
         <span class="gc-kw">if</span> (<span class="gc-fn">get_water_level</span>() &lt; <span class="gc-num">25</span>) <span class="gc-fn">water</span>();
 
         <span class="gc-cmt">// Move: sweep east, then step south and go back west</span>
-        <span class="gc-kw">if</span> (<span class="gc-fn">get_x</span>() &lt; GRID_W - <span class="gc-num">1</span>) { <span class="gc-fn">move_east</span>(); <span class="gc-kw">continue</span>; }
-        <span class="gc-kw">if</span> (<span class="gc-fn">get_y</span>() &lt; GRID_H - <span class="gc-num">1</span>)   <span class="gc-fn">move_south</span>();
+        <span class="gc-kw">if</span> (<span class="gc-fn">get_x</span>() &lt; <span class="gc-fn">get_max_x</span>() - <span class="gc-num">1</span>) { <span class="gc-fn">move_east</span>(); <span class="gc-kw">continue</span>; }
+        <span class="gc-kw">if</span> (<span class="gc-fn">get_y</span>() &lt; <span class="gc-fn">get_max_y</span>() - <span class="gc-num">1</span>)   <span class="gc-fn">move_south</span>();
         <span class="gc-kw">while</span> (<span class="gc-fn">get_x</span>() &gt; <span class="gc-num">0</span>) <span class="gc-fn">move_west</span>();
     }
 }</div>

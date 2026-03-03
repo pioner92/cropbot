@@ -2,7 +2,11 @@
 //  drone_api.h — Drone API for C++ / WebAssembly
 //  This file is automatically prepended to your code before compilation.
 //  You do not need to write #include; it is already included.
+//  If you write code in an external IDE, you CAN #include this file
+//  for autocomplete — the include guard below prevents double inclusion.
 // ================================================================
+#ifndef DRONE_API_H
+#define DRONE_API_H
 
 // ── Directions ────────────────────────────────────────────────
 enum class Direction {
@@ -108,4 +112,9 @@ inline int get_water_level(int x, int y)  { return get_water_level_at(x, y); }
 inline void wait(int ticks)   { drone_wait(ticks); }
 inline void print(int val)    { print_int(val); }
 
+// Grid size helpers
+inline int get_max_x() { return GRID_W; }
+inline int get_max_y() { return GRID_H; }
+
 #endif // __cplusplus
+#endif // DRONE_API_H
